@@ -1,0 +1,439 @@
+#!/usr/bin/env bash
+
+configure_database_yml()
+{
+  if [[ ! -s "$shared_path/config/database.yml" ]]
+  then
+    true "${database:=postgresql}"
+    write "\n${environment}: &defaults\n  adapter: ${database}\n  username: $project\n  password: '$project'\n  database: ${project}_${environment}\n  pool: 5\n  timeout: 5000" \
+      to "$shared_path/config/database.yml"
+
+    if [[ "$database" == "mysql" ]]
+    then
+      write "  socket: ${socket:-/tmp/mysql.sock}\n  encoding: utf8\n" \
+        append to "$shared_path/config/database.yml"
+    fi
+  fi
+
+  if variable_is_nonempty database && command_exists gem
+  then
+    case "$database" in
+      postgresql)
+        install_gems pg
+        if [[ "$?" -ne 0 ]] ; then
+          pg_config=$(command -v pg_config)
+          install_gem pg -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
+          # gem install pg --no-rdoc --no-ri -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
+        fi
+        ;;
+
+      mysql)
+        install_gems mysql
+        if [[ "$?" -ne 0 ]] ; then
+          mysql_config=$(command -v mysql_config)
+          install_gem mysql -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
+          #gem install mysql --no-rdoc --no-ri -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
+        fi
+        ;;
+
+      mongodb)
+        install_gems mongomapper
+        ;;
+
+      sqlite*|*)
+        install_gems sqlite3
+        ;;
+    esac
+  fi
+}
+
+configure_profiles()
+{
+  # Ensure the .bdsmrc file and the profiles are setup properly.
+  ensure_files_exist "$HOME/.bashrc" "$HOME/.bash_profile"
+
+  if ! file_contains "$HOME/.bashrc" '\.bdsmrc'
+  then
+    write '[[ -s "$HOME/.bdsmrc" ]] && . "$HOME/.bdsmrc"' \
+      to "$HOME/.bashrc"
+  fi
+
+  if ! file_contains "$HOME/.bash_profile" '\.bashrc'
+  then
+    write  '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
+      to "$HOME/.bash_profile"
+  fi
+
+  if ! file_contains "$HOME/.bash_profile" '\.rvmrc'
+  then
+    write '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
+      to "$HOME/.bash_profile"
+  fi
+}
+
+configure_bdsmrc()
+{ # TODO: Separate project specific vs rails specific env vars into project module.
+
+  variables_must_be_nonempty project
+
+  # TODO: These variables should be read & set via the defaults module.
+  local _config="${HOME}/.bdsmrc"
+
+  if ! file_contains "${_config}" 'project='
+  then
+    write "\nexport project=\"${project:-$user}\"" append to ${_config}
+  fi
+
+  variables_must_be_nonempty environment
+
+  if ! file_contains "${_config}" 'environment='
+  then
+    write "\nexport environment=\"$environment\"" append to ${_config}
+  fi
+
+  if ! file_contains "${_config}" 'RAILS_ENV='
+  then
+    write "\nexport RAILS_ENV=\"$environment\"" append to ${_config}
+  fi
+
+  if variable_is_nonempty repository_url && ! file_contains "${_config}" "repository_url="
+  then
+    write "\nexport repository_url=\"$repository_url\"" append to "${_config}"
+  fi
+
+  if variable_is_nonempty database && ! file_contains "${_config}" 'database='
+  then
+    write "export database=\"${database}\"" append  to "${_config}"
+  fi
+}
+
+fetch_repository()
+{ # TODO: Switch this to use the vcs module.
+  if [[ "$scm" = "git" ]] ||
+    (echo "$repository_url" | awk "/git/" 2>/dev/null)
+  then
+    if ! path_exists "$shared_path/$project/.git"
+    then
+      git clone ${scm_flags[@]} $repository_url $project
+    fi
+  elif [[ "$scm" = "svn" ]] ||
+    (echo "$repository_url" | awk "/svn/" 2>/dev/null)
+  then
+    if ! path_exists "$shared_path/$project/.svn"
+    then
+      svn checkout  ${scm_flags[@]} $repository_url $project
+    fi
+  elif [[ "$scm" = "hg" ]] ||
+    (echo "$repository_url" | awk "/hg/" 2>/dev/null)
+  then
+    if ! path_exists "$shared_path/$project/.hg"
+    then
+      hg clone ${scm_flags[@]} $repository_url $project
+    fi
+  else
+    fail "repository_url type not known, expecting {git,svn,hg} in the repository_url url."
+  fi
+}
+
+setup_shared_path()
+{
+  (
+  enter "${shared_path}"
+  ensure_paths_exist config log pids sockets "public/assets" tmp
+  )
+}
+
+configure_rvm()
+{
+  if file_is_empty_or_missing "${HOME}/.rvm/scripts/rvm"
+  then
+    if file_is_empty_or_missing "${HOME}/.rvmrc" ||
+      ! file_contains "$HOME/.rvmrc" 'rvm_path='
+    then
+      write 'export rvm_path="${HOME}/.rvm"' append to "${HOME}/.rvmrc"
+    fi
+
+    if ! file_contains "$HOME/.rvmrc" 'rvm_install_on_use_flag'
+    then
+      write 'export rvm_install_on_use_flag=1' append to "$HOME/.rvmrc"
+    fi
+
+    if ! file_contains "$HOME/.rvmrc" 'rvm_gems_path'
+    then
+      write 'export rvm_gems_path="$HOME/.rvm/gems"' append to "$HOME/.rvmrc"
+    fi
+
+    source_files "$HOME/.rvmrc"
+
+    rvm_install
+  fi
+
+  ensure_files_exist "$HOME/.bash_profile"
+
+  if file_is_nonempty "$shared_path/$project/.rvmrc"
+  then
+    (
+      source_files \
+        "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc" "$shared_path/$project/.rvmrc"
+    )
+  else # Default to 1.9.2 for now
+    (
+      source_files \
+        "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
+      export rvm_install_on_use_flag=1
+      rvm 1.9.2 --default
+    )
+
+  fi
+
+  if ! file_contains "$HOME/.bash_profile" "scripts/rvm"
+  then
+    write "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
+    append to "${HOME}/.bash_profile"
+  fi
+}
+
+setup_application_server()
+{
+  case "${server:-}" in
+    unicorn)
+      # TODO: Extension check
+      modules unicorn
+      unicorn_setup
+      ;;
+    mongrel2)
+      NIY "mongrel2 is not implemented yet for the rails extension."
+      modules mongrel2
+      mongrel2_setup
+      ;;
+    thin)
+      modules thin
+      setup
+      ;;
+    passenger) # Standalone
+      NIY "passenger is not implemented yet for the rails extension."
+      modules passenger
+      passenger_setup
+      ;;
+    *)
+      # Default to Unicorn
+      modules unicorn
+      unicorn_setup
+      ;;
+  esac
+}
+
+bootstrap_gems()
+{
+  (
+    . "${HOME}/.rvm/scripts/rvm"
+
+    enter "${release_path}"
+
+    if file_exists "Gemfile"
+    then
+      if command_exists "gem"
+      then
+        gem install bundler --no-rdoc --no-ri
+        bundle
+      else
+        error "'gem' command not found, not installing bundler."
+      fi
+    fi
+  )
+}
+
+rails_setup()
+{
+  extension_license
+
+  ensure_paths_exist "${shared_path}"
+
+  enter "${shared_path}"
+
+  setup_shared_path
+
+  configure_database_yml
+
+  configure_profiles
+
+  configure_bdsmrc
+
+  fetch_repository
+
+  configure_rvm
+
+  ( modules deploy ; deploy )
+
+  bootstrap_gems
+
+  setup_application_server
+}
+
+rails_server()
+{
+  enter "${release_path}"
+
+  if command_exists "ruby"
+  then
+    if file_is_nonempty "script/${action}"
+    then
+      $ruby script/${action}
+
+    elif file_is_nonempty "script/rails"
+    then
+      $ruby script/rails ${action}
+    fi
+  else
+    error "A default ruby does not seem to be set, cannot run ${action}"
+  fi
+}
+
+rails_dbconsole()
+{
+  enter "${release_path}"
+
+  if command_exists "ruby"
+  then
+    if file_is_nonempty "script/${action}"
+    then
+      ruby script/${action}
+    elif file_is_nonempty "script/rails"
+    then
+      ruby script/rails ${action}
+    elif command_exists rails
+    then
+      rails ${action}
+    else
+      true # TODO: raw psql/mysql/etc... based on database.yml
+    fi
+  else
+    error "'ruby' does not exist in the path, cannot run ${action}"
+  fi
+}
+
+rails_console()
+{
+  enter "${release_path}"
+
+  if command_exists ruby
+  then
+    if file_is_nonempty "script/${action}"
+    then
+      ruby script/${action}
+    elif file_is_nonempty "script/rails"
+    then
+      ruby script/rails ${action}
+    elif command_exists rails
+    then
+      rails ${action}
+    fi
+  else
+    error "'ruby' does not exist in the path, cannot run ${action}"
+  fi
+}
+
+rails_logtail()
+{
+  exec tail -f "${shared_path}/log/*.log"
+}
+
+rails_migrate()
+{
+  enter "${release_path}"
+
+  if ! command_exists rake
+  then
+    install_gems rake
+  fi
+
+  rake db:migrate --trace
+}
+
+rails_new()
+{
+  if command_exists "ruby"
+  then
+    if file_is_nonempty "script/${action}"
+    then
+      ruby script/${action}
+
+    elif file_is_nonempty "script/rails"
+    then
+      ruby script/rails ${action}
+
+    elif command_exists rails
+    then
+      rails ${action}
+    fi
+  else
+    error "'ruby' does not exist in the path, cannot run ${action}"
+  fi
+}
+
+rails_generate()
+{
+  enter "${release_path}"
+
+  if command_exists "ruby"
+  then
+    if file_is_nonempty "script/${action}"
+    then
+      ruby script/${action}
+    elif file_is_nonempty "script/rails"
+    then
+      ruby script/rails ${action}
+    elif command_exists rails
+    then
+      rails ${action}
+    fi
+  else
+    error "'ruby' does not exist in the path, cannot run ${action}"
+  fi
+}
+
+rails_bootstrap()
+{
+  enter "${release_path}"
+
+  if file_is_nonempty *.gems && command_exists "rvm"
+  then
+    rvm gemset import *.gems
+  fi
+
+  if file_is_nonempty "Gemfile"
+  then
+    if ! command_exists bundle
+    then
+      install_gems bundler
+    fi
+  elif file_contains "config/environment.rb" "config.gem"
+  then
+    rake gems:install
+  else
+    log "No Gemfile or config.gem entries detected, skipping gems."
+  fi
+
+  if ! command_exists rake
+  then
+    install_gems rake 0.8.7
+  fi
+
+  if command_exists rake
+  then
+    rake db:create
+    rake db:migrate
+  else
+    warn "'rake' command is missing, skipping db:create and db:migrate tasks."
+  fi
+}
+
+rails_install()
+{
+  enter "${release_path}"
+
+  if ! command_exists rails
+  then
+    install_gems rails
+  fi
+}
