@@ -5,22 +5,22 @@ set_master_pid()
   # Fetch the running pid.
   if variable_is_nonempty project
   then
-    running_pid=$(
-    ps auxww | awk "/[u]nicorn master/ && ! /(old)/ && /\/${project}\// {print \$2}"
+    running_pid=$( ps auxww |
+    awk "/[u]nicorn master/ && ! /(old)/ && /\/${project}\// {print \$2}"
     )
 
-    old_pid=$(
-    ps auxww | awk "/[u]nicorn master/ && /(old)/ && /\/${project}\// {print \$2}"
+    old_pid=$( ps auxww |
+    awk "/[u]nicorn master/ && /(old)/ && /\/${project}\// {print \$2}"
     )
   else
-    running_pid=$(
-    ps auxww | awk "/[u]nicorn master/ && ! /(old)/ && /\/${USER}\// {print \$2}"
+    running_pid=$( ps auxww |
+    awk "/[u]nicorn master/ && ! /(old)/ && /\/${USER}\// {print \$2}"
     )
-    old_pid=$(
-    ps auxww | awk "/[u]nicorn master/ && /(old)/ && /\/${USER}\// {print \$2}"
+    old_pid=$( ps auxww |
+    awk "/[u]nicorn master/ && /(old)/ && /\/${USER}\// {print \$2}"
     )
 
-    log "WARNING: 'project' should be set in ~/.bdsmrc"
+    log "WARNING: 'project' should be set in ~/.smrc"
   fi
 
   if (( running_pid > 0 ))
@@ -83,7 +83,6 @@ unicorn_start()
   else
     fail "config/unicorn.rb not found, aborting start."
   fi
-
 }
 
 unicorn_stop()

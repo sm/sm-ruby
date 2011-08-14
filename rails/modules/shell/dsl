@@ -49,12 +49,12 @@ configure_database_yml()
 
 configure_profiles()
 {
-  # Ensure the .bdsmrc file and the profiles are setup properly.
+  # Ensure the .smrc file and the profiles are setup properly.
   ensure_files_exist "$HOME/.bashrc" "$HOME/.bash_profile"
 
-  if ! file_contains "$HOME/.bashrc" '\.bdsmrc'
+  if ! file_contains "$HOME/.bashrc" '\.smrc'
   then
-    write '[[ -s "$HOME/.bdsmrc" ]] && . "$HOME/.bdsmrc"' \
+    write '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
       to "$HOME/.bashrc"
   fi
 
@@ -71,13 +71,13 @@ configure_profiles()
   fi
 }
 
-configure_bdsmrc()
+configure_smrc()
 { # TODO: Separate project specific vs rails specific env vars into project module.
 
   variables_must_be_nonempty project
 
   # TODO: These variables should be read & set via the defaults module.
-  local _config="${HOME}/.bdsmrc"
+  local _config="${HOME}/.smrc"
 
   if ! file_contains "${_config}" 'project='
   then
@@ -257,7 +257,7 @@ rails_setup()
 
   configure_profiles
 
-  configure_bdsmrc
+  configure_smrc
 
   fetch_repository
 
