@@ -1,3 +1,4 @@
 ext/project
 ext/rvm
 ext/extensions/manipulation
+ext/vcs

@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-if [[ "$action" != "help" ]]
-then # Sanity check
-  user_must_not_be_root
-fi
-
-scm_flags=()
-

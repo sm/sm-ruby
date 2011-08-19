@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+rails_initialize()
+{
+  if [[ "$action" != "help" ]]
+  then # Sanity check
+    user_must_not_be_root
+  fi
+
+  scm_flags=()
+}
+
 configure_database_yml()
 {
   if [[ ! -s "$shared_path/config/database.yml" ]]
@@ -104,34 +114,6 @@ configure_smrc()
   if variable_is_nonempty database && ! file_contains "${_config}" 'database='
   then
     write "export database=\"${database}\"" append  to "${_config}"
-  fi
-}
-
-fetch_repository()
-{ # TODO: Switch this to use the vcs module.
-  if [[ "$scm" = "git" ]] ||
-    (echo "$repository_url" | awk "/git/" 2>/dev/null)
-  then
-    if ! path_exists "$shared_path/$project/.git"
-    then
-      git clone ${scm_flags[@]} $repository_url $project
-    fi
-  elif [[ "$scm" = "svn" ]] ||
-    (echo "$repository_url" | awk "/svn/" 2>/dev/null)
-  then
-    if ! path_exists "$shared_path/$project/.svn"
-    then
-      svn checkout  ${scm_flags[@]} $repository_url $project
-    fi
-  elif [[ "$scm" = "hg" ]] ||
-    (echo "$repository_url" | awk "/hg/" 2>/dev/null)
-  then
-    if ! path_exists "$shared_path/$project/.hg"
-    then
-      hg clone ${scm_flags[@]} $repository_url $project
-    fi
-  else
-    fail "repository_url type not known, expecting {git,svn,hg} in the repository_url url."
   fi
 }
 
@@ -259,7 +241,8 @@ rails_setup()
 
   configure_smrc
 
-  fetch_repository
+  path_exists "$shared_path/$project" ||
+    fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]}
 
   configure_rvm
 
