@@ -181,7 +181,7 @@ configure_rvm()
       source_files \
         "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
       export rvm_install_on_use_flag=1
-      rvm 1.9.2 --default
+      rvm ruby --default
     )
 
   fi
