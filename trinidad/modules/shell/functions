@@ -1,0 +1,164 @@
+#!/bin/sh
+
+trinidad_initialize()
+{
+  variables_must_be_nonempty environment RAILS_ENV project
+
+  # Fetch the pid_file pid.
+  pid_file="$shared_path/pids/$project.pid"
+
+  pid_file_pid=0 running_pid=0 master_pid=0
+
+  if file_is_nonempty "$pid_file"
+  then
+    pid_file_pid=$(cat "$pid_file")
+  fi
+
+  set_master_pid
+
+  load_ruby_environment
+
+  if path_exists "$release_path"
+  then
+    enter "${release_path}"
+    # Since enter will not trigger project rvmrc files,
+    source_files "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
+  fi
+
+  service_log_file="${shared_path}/log/trinidad.log"
+
+  service_flags+=(
+  -S trinidad
+  --config="${service_config_path}/config.yml"
+  --pidfile="${service_pidfile}"
+  )
+
+  service_binary="jruby" # TODO: locate the actual jruby bin script.
+
+  export JAVA_OPTS="${java_opts[*]}"
+  export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+  # For rails apps,
+  # service_flags+=(--threadsafe)
+
+  java_opts+=(
+  "-server" "-Xmx2500m" "-Xms2500m"
+  "-XX:PermSize=512m" "-XX:MaxPermSize=512m" "-XX:NewRatio=2"
+  "-XX:+DisableExplicitGC" "-Dhk2.file.directory.changeIntervalTimer=6000"
+  "-Xss2048k-XX:ParallelGCThreads=4" "-XX:+AggressiveHeap"
+  )
+}
+
+set_master_pid()
+{
+  # Fetch the running pid.
+  if variable_is_nonempty project
+  then
+    running_pid=$(
+    ps auxww | awk "/[t]rinidad master/ && ! /(old)/ && /\/${project}\// {print \$2}"
+    )
+
+    old_pid=$(
+    ps auxww | awk "/[t]rinidad master/ && /(old)/ && /\/${project}\// {print \$2}"
+    )
+  else
+    running_pid=$(
+    ps auxww | awk "/[t]rinidad master/ && ! /(old)/ && /\/${USER}\// {print \$2}"
+    )
+    old_pid=$(
+    ps auxww | awk "/[t]rinidad master/ && /(old)/ && /\/${USER}\// {print \$2}"
+    )
+
+    log "WARNING: 'project' should be set in ~/.smrc"
+  fi
+
+  if (( running_pid > 0 ))
+  then
+    echo ${running_pid} > "$pid_file" # Make sure the correct running pid is in the pid_file.
+    master_pid=${running_pid} # Set to the found running pid_file.
+
+  elif (( pid_file_pid > 0 ))
+  then
+    master_pid=${pid_file_pid} # Running and matches pid_file.
+  fi
+
+  if os_is_linux && [[ ! -d "/proc/${master_pid}" ]]
+  then # Ensure that the proc exists, otherwise reset master_pid.
+    master_pid=0
+  fi
+}
+
+trinidad_setup()
+{
+  if template_exists "trinidad/trinidad.rb"
+  then
+    ensure_paths_exist "$shared_path/config"
+
+    install_template "trinidad/trinidad.rb" "${shared_path}/config/"
+
+    succeed "Setup complete."
+  else
+    fail "Template file $extensions_path/trinidad/templates/trinidad.rb.template is missing."
+  fi
+}
+
+trinidad_dbpool()
+{
+  # https://github.com/trinidad/trinidad_dbpool_extension
+  # http://tomcat.apache.org/tomcat-6.0-doc/jndi-datasource-examples-howto.html
+  # http://commons.apache.org/dbcp/configuration.html
+  # Pools supported:
+  #   trinidad_postgresql_dbpool_extension
+  #   trinidad_mysql_dbpool_extension
+  #   trinidad_mssql_dbpool_extension
+  #   trinidad_oracle_dbpool_extension
+  # jruby -S gem install trinidad_mysql_dbpool_extension
+  : \
+    ${project_name:="postgresql"} \
+    ${adapter:="postgresql"} \
+    ${host:="localhost"} \
+    ${port:="5432"} \
+    ${database:="${project}_${environment}"} \
+    ${username:="${project}"} \
+    ${password:="${project}"} \
+    ${database_url:="${adapter}://${hostname}:${port}/${database}"} \
+    ${max_active:=100} \
+    ${max_idle:=30} \
+    ${max_wait:=1000}
+
+  seed_template "/path/to/trinidad.yml"\
+    project "${project}" \
+    adapter "${adapter}" \
+    host "${host}" \
+    port "${port}" \
+    database "${database}" \
+    username "${username}" \
+    password "${password}" \
+    max_active "${max_active}" \
+    max_idle "${max_idle}" \
+    max_wait "${max_wait}"
+}
+
+trinidad_restart()
+{
+  touch "tmp/restart.txt"
+}
+
+trinidad_install()
+{
+  load_ruby_environment
+  jruby -S gem install trinidad
+}
+
+load_ruby_environment()
+{
+  if file_exists "$HOME/.rvm/environments/default"
+  then
+    source_files "$HOME/.rvm/environments/default"
+
+  elif file_exists "/usr/local/rvm/environments/default"
+  then
+    source_files "/usr/local/rvm/environments/default"
+  fi
+}
+

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+rainbows_initialize()
+{
+  variables_must_be_nonempty environment RAILS_ENV project
+
+  # Fetch the pid_file pid.
+  pid_file="$shared_path/pids/$project.pid"
+
+  pid_file_pid=0
+
+  file_is_nonempty "$pid_file" &&
+    pid_file_pid=$(cat "$pid_file")
+
+  # Fetch the running pid.
+  if variable_is_nonempty project ; then
+
+    running_pid=$(
+    ps auxww | awk "/[r]ainbows master/ && ! /(old)/ && /${project}/ {print \$2}"
+    )
+
+    old_pid=$(
+    ps auxww | awk "/[r]ainbows master/ && /(old)/ && /${project}/ {print \$2}"
+    )
+  else
+    running_pid=$(
+    ps auxww | awk "/[r]ainbows master/ && ! /(old)/ && /${USER}/ {print \$2}"
+    )
+    old_pid=$(
+    ps auxww | awk "/[r]ainbows master/ && /(old)/ && /${USER}/ {print \$2}"
+    )
+
+    log "WARNING: 'project' should be set in ~/.smrc"
+  fi
+
+  if [[ ${running_pid:-0} -gt 0 && -d "/proc/${running_pid}" ]] ; then
+    echo ${running_pid} > "$pid_file" # Make sure the correct running pid is in the pid_file.
+    master_pid=${running_pid} # Set to the found running pid_file.
+  elif [[ ${pid_file_pid:-0} -gt 0 && -d "/proc/${pid_file_pid}" ]] ; then
+    master_pid=${pid_file_pid} # Running and matches pid_file.
+  else
+    master_pid=0 # Not found!
+  fi
+
+  path_exists "$release_path" && enter "${release_path}"
+
+  # Since enter will not trigger project rvmrc files,
+  source_files "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd"
+}

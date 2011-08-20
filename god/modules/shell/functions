@@ -1,0 +1,6 @@
+#!/bin/sh
+
+god_initialize()
+{
+  fail "BDSM Extension '${extension}' has not been implemented yet."
+}
