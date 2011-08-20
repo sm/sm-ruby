@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 rails_initialize()
 {
@@ -6,6 +6,8 @@ rails_initialize()
   then # Sanity check
     user_must_not_be_root
   fi
+
+  true ${project_root:="$HOME"}
 
   scm_flags=()
 }
@@ -50,6 +52,10 @@ configure_database_yml()
         install_gems mongomapper
         ;;
 
+      riak)
+        true # This would be cool eh?
+        ;;
+
       sqlite*|*)
         install_gems sqlite3
         ;;
@@ -62,23 +68,17 @@ configure_profiles()
   # Ensure the .smrc file and the profiles are setup properly.
   ensure_files_exist "$HOME/.bashrc" "$HOME/.bash_profile"
 
-  if ! file_contains "$HOME/.bashrc" '\.smrc'
-  then
+  file_contains "$HOME/.bashrc" '\.smrc' ||
     write '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
       to "$HOME/.bashrc"
-  fi
 
-  if ! file_contains "$HOME/.bash_profile" '\.bashrc'
-  then
+  file_contains "$HOME/.bash_profile" '\.bashrc' ||
     write  '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
       to "$HOME/.bash_profile"
-  fi
 
-  if ! file_contains "$HOME/.bash_profile" '\.rvmrc'
-  then
+  file_contains "$HOME/.bash_profile" '\.rvmrc' ||
     write '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
       to "$HOME/.bash_profile"
-  fi
 }
 
 configure_smrc()
@@ -89,22 +89,19 @@ configure_smrc()
   # TODO: These variables should be read & set via the defaults module.
   local _config="${HOME}/.smrc"
 
-  if ! file_contains "${_config}" 'project='
-  then
-    write "\nexport project=\"${project:-$user}\"" append to ${_config}
-  fi
+  file_contains "${_config}" 'project=' ||
+    write "\nexport project=\"${project:-$user}\"" \
+    append to ${_config}
 
   variables_must_be_nonempty environment
 
-  if ! file_contains "${_config}" 'environment='
-  then
-    write "\nexport environment=\"$environment\"" append to ${_config}
-  fi
+  file_contains "${_config}" 'environment=' ||
+    write "\nexport environment=\"$environment\"" \
+    append to ${_config}
 
-  if ! file_contains "${_config}" 'RAILS_ENV='
-  then
-    write "\nexport RAILS_ENV=\"$environment\"" append to ${_config}
-  fi
+  file_contains "${_config}" 'RAILS_ENV=' ||
+    write "\nexport RAILS_ENV=\"$environment\"" \
+      append to ${_config}
 
   if variable_is_nonempty repository_url && ! file_contains "${_config}" "repository_url="
   then
@@ -119,10 +116,13 @@ configure_smrc()
 
 setup_shared_path()
 {
-  (
-  enter "${shared_path}"
-  ensure_paths_exist config log pids sockets "public/assets" tmp
-  )
+  local _path
+
+  for _path in config log pids sockets "public/assets" tmp
+  do
+    log_step "Ensuring path exists ~ ${shared_path}/${_path}" \
+      ensure_paths_exist  "${shared_path}/${_path}"
+  done
 }
 
 configure_rvm()
@@ -227,19 +227,21 @@ bootstrap_gems()
 
 rails_setup()
 {
-  extension_license
+  log_step "Configuring ~/.smrc" \
+    configure_smrc
+
+  log_step "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)" \
+    configure_profiles
 
   ensure_paths_exist "${shared_path}"
 
   enter "${shared_path}"
 
+  log_step "Setting up shared path (~/shared)"
   setup_shared_path
 
-  configure_database_yml
-
-  configure_profiles
-
-  configure_smrc
+  log_step "Configuring database.yml (~/shared/config/database.yml)" \
+    configure_database_yml
 
   path_exists "$shared_path/$project" ||
     fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]}

@@ -1,4 +1,32 @@
-#!/usr/bin/env bash
+#!/bin/sh
+
+unicorn_initialize()
+{
+  variables_must_be_nonempty environment RAILS_ENV project
+
+  # Fetch the pid_file pid.
+  pid_file="$shared_path/pids/$project.pid"
+
+  pid_file_pid=0 running_pid=0 master_pid=0
+
+  if file_is_nonempty "$pid_file"
+  then
+    pid_file_pid=$(cat "$pid_file")
+  fi
+
+  set_master_pid
+
+  load_ruby_environment
+
+  if path_exists "$release_path"
+  then
+    enter "${release_path}"
+    # Since enter will not trigger project rvmrc files,
+    source_files "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
+  fi
+
+  service_log_file="${shared_path}/log/unicorn.log"
+}
 
 set_master_pid()
 {
