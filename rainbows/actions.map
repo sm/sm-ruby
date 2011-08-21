@@ -1,0 +1,15 @@
+decrease=decrease
+help=help
+increase=increase
+install=install
+list=list
+pause=pause
+reload=reload
+reopen_logs=reopen_logs
+restart=restart
+setup=setup
+start=start
+status=status
+stop=stop
+terminate=terminate
+unpause=unpause

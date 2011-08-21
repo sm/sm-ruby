@@ -1,0 +1,8 @@
+disable=disable
+enable=enable
+help=help
+install=install
+services=services
+setup=setup
+start=start
+stop=stop
