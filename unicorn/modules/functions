@@ -28,6 +28,56 @@ unicorn_initialize()
   service_log_file="${shared_path}/log/unicorn.log"
 }
 
+
+unicorn_usage() {
+  printf "
+  Usage:
+
+    $0 [options]
+
+  options:
+
+    --prefix   - specify prefix path
+    --src)     - specify source directory
+    --data)    - specify data directory
+    --user)    - specify user to install as
+    --version) - specify version to install
+    --licence) - view licence
+    --help)    - view this usage information
+
+"
+  return 0
+}
+
+unicorn_cli()
+{
+  number_of_args=${#extension_args[@]}
+
+  for ((index=0 ; index < $number_of_args ; index++)) ; do
+
+    token="${extension_args[$index]}"
+
+    case "$token" in
+      --version)
+        package_version="${extension_args[$((++index))]}"
+        ;;
+      --licence)
+        display_extension_licence
+        exit 0
+        ;;
+      --help|-h)
+        unicorn_usage
+        exit 0
+        ;;
+      *)
+        true # Ignore?
+        ;;
+    esac
+  done
+
+  unicorn_initialize
+}
+
 set_master_pid()
 {
   # Fetch the running pid.
