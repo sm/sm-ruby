@@ -3,7 +3,7 @@ bootstrap=rails_bootstrap()
 console=rails_()
 dbconsole=rails_dbconsole()
 generate=rails_generate()
-help=help
+
 install=rails_install()
 logtail=rails_logtail()
 migrate=rails_migrate()

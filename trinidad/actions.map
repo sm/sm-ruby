@@ -1,7 +1,7 @@
 config/dbpool=config/trinidad_dbpool()
 config/help=config/help
 config/setup=config/trinidad_setup()
-help=help
+
 install=unicorn_install()
 service/decrease=service/unicorn_decrease()
 service/help=service/help

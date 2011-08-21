@@ -1,6 +1,6 @@
 config/help=config/help
 config/setup=config/unicorn_setup()
-help=help
+
 install=unicorn_install()
 service/decrease=service/unicorn_decrease()
 service/help=service/help
