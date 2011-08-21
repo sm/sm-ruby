@@ -12,6 +12,69 @@ rails_initialize()
   scm_flags=()
 }
 
+rails_usage()
+{
+  log "
+CLI Arguments:
+
+  -r|--repository  - The URL for the project repository code.
+
+  -E|--environment - The environment (eg. production,staging,etc...)
+
+  -p|--project     - The project name, defaults to current user name
+
+  -D|--database)   - Database name
+
+  -s|--server      - Application server (eg. unicorn, thin, etc...)
+
+  --help           - This help text
+
+  --licence        - Display extension license
+"
+}
+
+ralis_cli()
+{
+  number_of_args=${#extension_args[@]}
+
+  for ((index=0 ; index < $number_of_args ; index++))
+  do
+    token="${extension_args[$index]}"
+
+    case "$token" in
+      -r|--repo|--repository)
+        repository_url="${extension_args[$((++index))]}"
+        ;;
+      -E|--environment|--env)
+        environment="${extension_args[$((++index))]}"
+        ;;
+      -p|--project)
+        project="${extension_args[$((++index))]}"
+        ;;
+      -D|--database|--db)
+        database="${extension_args[$((++index))]}"
+        ;;
+      -s|--server)
+        server="${extension_args[$((++index))]}"
+        ;;
+      --scm-flag|-F)
+        scm_flags+=("${extension_args[$((++index))]}")
+        ;;
+      --help|-h)
+        rails_usage
+        exit 0
+        ;;
+      --licence)
+        display_extension_licence
+        exit 0
+        ;;
+    esac
+  done
+
+  rails_initialize
+}
+
+
 configure_database_yml()
 {
   if [[ ! -s "$shared_path/config/database.yml" ]]
