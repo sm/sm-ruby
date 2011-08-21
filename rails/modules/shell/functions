@@ -89,6 +89,9 @@ configure_smrc()
   # TODO: These variables should be read & set via the defaults module.
   local _config="${HOME}/.smrc"
 
+  file_exists "${_config}" ||
+    error ".smrc file does not exist, run following command to generate it:\n\n sm smrc\n"
+
   file_contains "${_config}" 'project=' ||
     write "\nexport project=\"${project:-$user}\"" \
     append to ${_config}
