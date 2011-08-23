@@ -5,8 +5,6 @@ require "fileutils"
 
 # TODO: Load these from the ruby bdsm modules
 def log(message)
-  @log_file ||= "#{ENV["log_path"]}/#{ENV["action"]}.log"
-
   unless File.exist?(File.dirname(@log_file)) && File.directory?(File.dirname(@log_file))
     FileUtils.mkdir_p(File.dirname(@log_file))
   end
