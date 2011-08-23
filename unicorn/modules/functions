@@ -6,6 +6,7 @@ unicorn_initialize()
 
   # Fetch the pid_file pid.
   pid_file="$shared_path/pids/$project.pid"
+  service_pid_file="${pid_file}" # Needed for unicorn_status
 
   pid_file_pid=0 running_pid=0 master_pid=0
 
