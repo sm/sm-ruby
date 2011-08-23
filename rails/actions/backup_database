@@ -3,14 +3,45 @@
 require "yaml"
 require "fileutils"
 
-trace "Loading BDSM #{ENV["extension"]} #{ENV["action"]} Utility."
-@timestamp = Time.now.strftime("%Y-%m-%dT%H:%M:%S")
 #
-# Setup & Extract variables
+# Methods
+#
+# TODO: Load these from the ruby bdsm modules
+def log(message)
+  unless File.exist?(File.dirname(@log_file)) && File.directory?(File.dirname(@log_file))
+    FileUtils.mkdir_p(File.dirname(@log_file))
+  end
+
+  File.open(@log_file, 'w+') do |log_file|
+    log_file.write "#{@timestamp} : #{@application} : #{@environment} : #{message}\n"
+  end
+  $stdout.puts message
+end
+
+def trace(message)
+  @trace_flag ||= ENV["trace_flag"].to_i
+  log(message) if @trace_flag
+end
+
+def fail(message)
+  log "#{@timestamp} : #{@application} : #{@environment} : #{message}"
+  $stderr.puts "#{@timestamp} : #{@application} : #{@environment} : #{message}"
+  exit 1
+end
+
+def succeed(message)
+  log(message)
+  exit 0
+end
+
+#
+# Variables
 #
 @log_path = "#{ENV["HOME"]}/shared/backups/log"
 @log_file = "#{@log_path}/backup.log"
 
+@timestamp = Time.now.strftime("%Y-%m-%dT%H:%M:%S")
+trace "Loading BDSM #{ENV["extension"]} #{ENV["action"]} Utility."
 @user = (ENV["USER"]|| %x{printf $USER}).strip
 
 @application = ARGV.shift unless ARGV[0].to_s.strip.empty?
@@ -50,37 +81,8 @@ trace "Ensuring that target path '#{@target_path}' exists."
 
 FileUtils.mkdir_p(@target_path) unless File.exist?(@target_path)
 
-
-# TODO: Load these from the ruby bdsm modules
-def log(message)
-  unless File.exist?(File.dirname(@log_file)) && File.directory?(File.dirname(@log_file))
-    FileUtils.mkdir_p(File.dirname(@log_file))
-  end
-
-  File.open(@log_file, 'w+') do |log_file|
-    log_file.write "#{@timestamp} : #{@application} : #{@environment} : #{message}\n"
-  end
-  $stdout.puts message
-end
-
-def trace(message)
-  @trace_flag ||= ENV["trace_flag"].to_i
-  log(message) if @trace_flag
-end
-
-def fail(message)
-  log "#{@timestamp} : #{@application} : #{@environment} : #{message}"
-  $stderr.puts "#{@timestamp} : #{@application} : #{@environment} : #{message}"
-  exit 1
-end
-
-def succeed(message)
-  log(message)
-  exit 0
-end
-
 #
-# Perform the backup
+# Backup
 #
 case @adapter
 when "mysql","mysql2"
