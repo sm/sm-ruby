@@ -2,6 +2,9 @@
 
 rails_initialize()
 {
+  log_path="${shared_path}/log" # For backup_database
+  export log_path shared_path
+
   if [[ "$action" != "help" ]]
   then # Sanity check
     user_must_not_be_root
