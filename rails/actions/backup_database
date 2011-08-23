@@ -7,7 +7,9 @@ require "fileutils"
 def log(message)
   @log_file ||= "#{ENV["extension_log_path"]}/#{ENV["action"]}.log"
 
-  FileUtils.mkdir_p(File.dirname(@log_file)) unless Dir.exist?(File.dirname(@log_file))
+  unless File.exist?(File.dirname(@log_file)) && File.directory?(File.dirname(@log_file))
+    FileUtils.mkdir_p(File.dirname(@log_file))
+  end
 
   File.open(@log_file, 'w+') do |log_file|
     log_file.write "#{@timestamp} : #{@application} : #{@environment} : #{message}\n"
