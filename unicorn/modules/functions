@@ -7,7 +7,11 @@ unicorn_initialize()
   pid_file="$shared_path/pids/$project.pid"
   service_pid_file="${pid_file}" # Needed for unicorn_status
   pid_file_pid=0 running_pid=0 master_pid=0
-  file_is_empty "$pid_file" || pid_file_pid=$(cat "$pid_file")
+
+  if file_is_nonempty "$pid_file"
+  then
+    read -r pid_file_pid < "${pid_file}"
+  fi
 
   set_master_pid
 
