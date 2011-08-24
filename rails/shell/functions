@@ -276,20 +276,21 @@ setup_application_server()
 
 bootstrap_gems()
 {
+  true ${bundle_args:=()}
   (
     . "${HOME}/.rvm/scripts/rvm"
+
+    command_exists "gem" || return 0
 
     enter "${release_path}"
 
     if file_exists "Gemfile"
     then
-      if command_exists "gem"
-      then
-        gem install bundler --no-rdoc --no-ri
-        bundle
-      else
-        error "'gem' command not found, not installing bundler."
-      fi
+      command_exists bundle || gem install bundler --no-rdoc --no-ri
+
+      bundle ${bundle_args[@]}
+    else
+      error "'gem' command not found, not installing bundler."
     fi
   )
 }
