@@ -322,11 +322,6 @@ rails_setup()
 
   module_or_error deploy "Deploy extension is missing (ext/deploy)"
 
-  if ! ( deploy )
-  then
-    warn "Deploy failed, after setup is complete inspect things and then retry via:\n sm deploy"
-  fi
-
   bootstrap_gems
 }
 
