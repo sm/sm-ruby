@@ -1,8 +1,0 @@
-disable=disable
-enable=enable
-
-install=install
-services=services
-setup=setup
-start=start
-stop=stop
