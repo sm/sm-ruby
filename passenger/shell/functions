@@ -20,9 +20,9 @@ passenger_stop() {
 passenger_restart() {
   log "Triggering restart of Passenger application."
 
-  ensure_paths_exist "$release_path/tmp"
+  paths create "$release_path/tmp"
 
-  ensure_files_exist "$release_path/tmp/restart.txt"
+  paths create "$release_path/tmp/restart.txt"
 
   log "Restart triggered."
 }

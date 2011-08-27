@@ -17,9 +17,9 @@ unicorn_initialize()
 
   load_ruby_environment
 
-  if path_exists "$release_path"
+  if path exists "$release_path"
   then
-    enter "${release_path}"
+    paths enter "${release_path}"
     # Since enter will not trigger project rvmrc files,
     source_files "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
   fi
@@ -120,7 +120,7 @@ unicorn_setup()
 {
   if template_exists "unicorn/unicorn.rb"
   then
-    ensure_paths_exist "$shared_path/config"
+    paths create "$shared_path/config"
 
     install_template "unicorn/unicorn.rb" "${shared_path}/config/"
 
@@ -239,7 +239,7 @@ unicorn_pause()
 {
   if (( master_pid > 0 ))
   then
-    enter "${release_path}"
+    paths enter "${release_path}"
     service_signal WINCH ${master_pid}
   else
     succeed "Unicorn is not running for $project yet."

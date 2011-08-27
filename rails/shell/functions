@@ -190,7 +190,7 @@ setup_shared_path()
   for _path in config log pids sockets "public/assets" tmp
   do
     log_step "Ensuring path exists ~ ${shared_path}/${_path}" \
-      ensure_paths_exist  "${shared_path}/${_path}"
+      paths create  "${shared_path}/${_path}"
   done
 }
 
@@ -282,7 +282,7 @@ bootstrap_gems()
 
     command_exists "gem" || return 0
 
-    enter "${release_path}"
+    paths enter "${release_path}"
 
     if file_exists "Gemfile"
     then
@@ -303,9 +303,9 @@ rails_setup()
   log_step "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)" \
     configure_profiles
 
-  ensure_paths_exist "${shared_path}"
+  paths create "${shared_path}"
 
-  enter "${shared_path}"
+  paths enter "${shared_path}"
 
   log_step "Setting up shared path (~/shared)"
   setup_shared_path
@@ -313,7 +313,7 @@ rails_setup()
   log_step "Configuring database.yml (~/shared/config/database.yml)" \
     configure_database_yml
 
-  path_exists "$shared_path/$project" ||
+  path exists "$shared_path/$project" ||
     fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]}
 
   configure_rvm
@@ -327,7 +327,7 @@ rails_setup()
 
 rails_server()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if command_exists "ruby"
   then
@@ -346,7 +346,7 @@ rails_server()
 
 rails_dbconsole()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if command_exists "ruby"
   then
@@ -369,7 +369,7 @@ rails_dbconsole()
 
 rails_console()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if command_exists ruby
   then
@@ -395,7 +395,7 @@ rails_logtail()
 
 rails_migrate()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if ! command_exists rake
   then
@@ -428,7 +428,7 @@ rails_new()
 
 rails_generate()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if command_exists "ruby"
   then
@@ -449,7 +449,7 @@ rails_generate()
 
 rails_bootstrap()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if file_is_nonempty *.gems && command_exists "rvm"
   then
@@ -485,7 +485,7 @@ rails_bootstrap()
 
 rails_install()
 {
-  enter "${release_path}"
+  paths enter "${release_path}"
 
   if ! command_exists rails
   then

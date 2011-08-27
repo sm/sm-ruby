@@ -2,7 +2,7 @@
 
 rvm_install()
 {
-  enter "${src_path}"
+  paths enter "${src_path}"
 
   url="https://rvm.beginrescueend.com/install/rvm"
 
