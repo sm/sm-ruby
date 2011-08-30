@@ -110,7 +110,7 @@ set_master_pid()
     master_pid=${pid_file_pid} # Running and matches pid_file.
   fi
 
-  if os_is_linux && [[ ! -d "/proc/${master_pid}" ]]
+  if os is linux && [[ ! -d "/proc/${master_pid}" ]]
   then # Ensure that the proc exists, otherwise reset master_pid.
     master_pid=0
   fi
