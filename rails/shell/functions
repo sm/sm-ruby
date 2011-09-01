@@ -5,9 +5,9 @@ rails_initialize()
   log_path="${shared_path}/log" # For backup_database
   export log_path shared_path
 
-  if [[ "$action" != "help" ]]
+  if [[ "$action" != "help" ]] && user is root
   then # Sanity check
-    user_must_not_be_root
+    error "Can not work as root with rails extension."
   fi
 
   true ${project_root:="$HOME"}
