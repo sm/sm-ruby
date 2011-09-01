@@ -93,7 +93,7 @@ configure_database_yml()
     fi
   fi
 
-  if [[ -n "${ database}" && command_exists gem
+  if [[ -n "${ database}" ]] && command_exists gem
   then
     case "$database" in
       postgresql)
