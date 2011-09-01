@@ -134,17 +134,17 @@ configure_profiles()
   # Ensure the .smrc file and the profiles are setup properly.
   files exist "$HOME/.bashrc" "$HOME/.bash_profile" || error "No profile files found"
 
-  files contains string '\.smrc' in "$HOME/.bashrc" ||
+  files contain string '\.smrc' in "$HOME/.bashrc" ||
     files write \
       string '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
       to "$HOME/.bashrc"
 
-  files contains string '\.bashrc' in "$HOME/.bash_profile" ||
+  files contain string '\.bashrc' in "$HOME/.bash_profile" ||
     files write  \
       string '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
       to "$HOME/.bash_profile"
 
-  files contains string '\.rvmrc' in "$HOME/.bash_profile" ||
+  files contain string '\.rvmrc' in "$HOME/.bash_profile" ||
     files write \
       string '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
       to "$HOME/.bash_profile"
@@ -161,31 +161,33 @@ configure_smrc()
   files exists "${_config}" ||
     error ".smrc file does not exist, run following command to generate it:\n\n sm smrc\n"
 
-  files contains string 'project=' in "${_config}" ||
+  files contain string 'project=' in "${_config}" ||
     fiels write \
       string "\nexport project=\"${project:-$user}\"" \
       append to ${_config}
 
   variables_must_be_nonempty environment
 
-  files contains string 'environment=' in "${_config}" ||
+  files contain string 'environment=' in "${_config}" ||
     fiels write \
       string "\nexport environment=\"$environment\"" \
       append to ${_config}
 
-  files contains string 'RAILS_ENV=' in "${_config}" ||
+  files contain string 'RAILS_ENV=' in "${_config}" ||
     files write \
       string "\nexport RAILS_ENV=\"$environment\"" \
       append to ${_config}
 
-  if [[ -n "${repository_url}" ]] && ! files contains string "repository_url=" in "${_config}"
+  if [[ -n "${repository_url}" ]] &&
+    ! files contain string "repository_url=" in "${_config}"
   then
     files write \
       string "\nexport repository_url=\"$repository_url\"" \
       append to "${_config}"
   fi
 
-  if [[ -n "${database}" ]] && ! files contains string 'database=' in "${_config}"
+  if [[ -n "${database}" ]] &&
+    ! files contain string 'database=' in "${_config}"
   then
     fiels write \
       string "export database=\"${database}\"" \
@@ -209,21 +211,21 @@ configure_rvm()
   if [[ ! -s "${HOME}/.rvm/scripts/rvm" ]]
   then
     if [[ ! -s "${HOME}/.rvmrc" ]] ||
-      ! files contains string 'rvm_path=' in "$HOME/.rvmrc"
+      ! files contain string 'rvm_path=' in "$HOME/.rvmrc"
     then
       files write \
         string 'export rvm_path="${HOME}/.rvm"' \
         append to "${HOME}/.rvmrc"
     fi
 
-    if ! files contains string 'rvm_install_on_use_flag' in "$HOME/.rvmrc"
+    if ! files contain string 'rvm_install_on_use_flag' in "$HOME/.rvmrc"
     then
       fiels write \
         string 'export rvm_install_on_use_flag=1' \
         append to "$HOME/.rvmrc"
     fi
 
-    if ! files contains string 'rvm_gems_path' in "$HOME/.rvmrc"
+    if ! files contain string 'rvm_gems_path' in "$HOME/.rvmrc"
     then
       files write \
         string 'export rvm_gems_path="$HOME/.rvm/gems"' \
@@ -252,7 +254,7 @@ configure_rvm()
     )
   fi
 
-  if ! files contains string "scripts/rvm" in "$HOME/.bash_profile"
+  if ! files contain string "scripts/rvm" in "$HOME/.bash_profile"
   then
     files write \
       string "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
@@ -478,7 +480,7 @@ rails_bootstrap()
     then
       install_gems bundler
     fi
-  elif files contains string "config.gem" in "config/environment.rb"
+  elif files contain string "config.gem" in "config/environment.rb"
   then
     rake gems:install
   else
