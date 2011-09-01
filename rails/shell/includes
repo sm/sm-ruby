@@ -3,3 +3,5 @@ rvm
 api/extensions/manipulation
 api/vcs
 api/user
+api/files
+api/paths
