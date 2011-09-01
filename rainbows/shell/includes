@@ -1,4 +1,4 @@
-ext/variables
-ext/project
-ext/rvm
-ext/templates
+api/variables
+api/project
+api/rvm
+api/templates

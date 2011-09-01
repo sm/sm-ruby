@@ -1,4 +1,4 @@
-ext/variables
-ext/project
-ext/templates
-ext/service
+api/variables
+api/project
+api/templates
+api/service
