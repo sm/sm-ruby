@@ -93,7 +93,7 @@ configure_database_yml()
     fi
   fi
 
-  if variable_is_nonempty database && command_exists gem
+  if [[ -n "${ database}" && command_exists gem
   then
     case "$database" in
       postgresql)
@@ -320,6 +320,8 @@ rails_setup()
 
   log_step "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)" \
     configure_profiles
+
+  [[ -n "shared_path" ]] || error "shared_path not set"
 
   paths create "${shared_path}"
 
