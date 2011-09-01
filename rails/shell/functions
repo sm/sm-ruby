@@ -132,54 +132,64 @@ configure_database_yml()
 configure_profiles()
 {
   # Ensure the .smrc file and the profiles are setup properly.
-  ensure_files_exist "$HOME/.bashrc" "$HOME/.bash_profile"
+  files exist "$HOME/.bashrc" "$HOME/.bash_profile" || error "No profile files found"
 
-  file_contains "$HOME/.bashrc" '\.smrc' ||
-    write '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
+  files contains string '\.smrc' in "$HOME/.bashrc" ||
+    files write \
+      string '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
       to "$HOME/.bashrc"
 
-  file_contains "$HOME/.bash_profile" '\.bashrc' ||
-    write  '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
+  files contains string '\.bashrc' in "$HOME/.bash_profile" ||
+    files write  \
+      string '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
       to "$HOME/.bash_profile"
 
-  file_contains "$HOME/.bash_profile" '\.rvmrc' ||
-    write '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
+  files contains string '\.rvmrc' in "$HOME/.bash_profile" ||
+    files write \
+      string '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
       to "$HOME/.bash_profile"
 }
 
 configure_smrc()
 { # TODO: Separate project specific vs rails specific env vars into project module.
 
-  variables_must_be_nonempty project
+  [[ -n "${project}" ]] || error "project variable is not set, please run 'sm smrc' and check edit '~/.smrc'."
 
   # TODO: These variables should be read & set via the defaults module.
   local _config="${HOME}/.smrc"
 
-  file_exists "${_config}" ||
+  files exists "${_config}" ||
     error ".smrc file does not exist, run following command to generate it:\n\n sm smrc\n"
 
-  file_contains "${_config}" 'project=' ||
-    write "\nexport project=\"${project:-$user}\"" \
-    append to ${_config}
+  files contains string 'project=' in "${_config}" ||
+    fiels write \
+      string "\nexport project=\"${project:-$user}\"" \
+      append to ${_config}
 
   variables_must_be_nonempty environment
 
-  file_contains "${_config}" 'environment=' ||
-    write "\nexport environment=\"$environment\"" \
-    append to ${_config}
-
-  file_contains "${_config}" 'RAILS_ENV=' ||
-    write "\nexport RAILS_ENV=\"$environment\"" \
+  files contains string 'environment=' in "${_config}" ||
+    fiels write \
+      string "\nexport environment=\"$environment\"" \
       append to ${_config}
 
-  if variable_is_nonempty repository_url && ! file_contains "${_config}" "repository_url="
+  files contains string 'RAILS_ENV=' in "${_config}" ||
+    files write \
+      string "\nexport RAILS_ENV=\"$environment\"" \
+      append to ${_config}
+
+  if [[ -n "${repository_url}" ]] && ! files contains string "repository_url=" in "${_config}"
   then
-    write "\nexport repository_url=\"$repository_url\"" append to "${_config}"
+    files write \
+      string "\nexport repository_url=\"$repository_url\"" \
+      append to "${_config}"
   fi
 
-  if variable_is_nonempty database && ! file_contains "${_config}" 'database='
+  if [[ -n "${database}" ]] && ! files contains string 'database=' in "${_config}"
   then
-    write "export database=\"${database}\"" append  to "${_config}"
+    fiels write \
+      string "export database=\"${database}\"" \
+      append to "${_config}"
   fi
 }
 
@@ -196,51 +206,57 @@ setup_shared_path()
 
 configure_rvm()
 {
-  if file_is_empty_or_missing "${HOME}/.rvm/scripts/rvm"
+  if [[ ! -s "${HOME}/.rvm/scripts/rvm" ]]
   then
-    if file_is_empty_or_missing "${HOME}/.rvmrc" ||
-      ! file_contains "$HOME/.rvmrc" 'rvm_path='
+    if [[ ! -s "${HOME}/.rvmrc" ]] ||
+      ! files contains string 'rvm_path=' in "$HOME/.rvmrc"
     then
-      write 'export rvm_path="${HOME}/.rvm"' append to "${HOME}/.rvmrc"
+      files write \
+        string 'export rvm_path="${HOME}/.rvm"' \
+        append to "${HOME}/.rvmrc"
     fi
 
-    if ! file_contains "$HOME/.rvmrc" 'rvm_install_on_use_flag'
+    if ! files contains string 'rvm_install_on_use_flag' in "$HOME/.rvmrc"
     then
-      write 'export rvm_install_on_use_flag=1' append to "$HOME/.rvmrc"
+      fiels write \
+        string 'export rvm_install_on_use_flag=1' \
+        append to "$HOME/.rvmrc"
     fi
 
-    if ! file_contains "$HOME/.rvmrc" 'rvm_gems_path'
+    if ! files contains string 'rvm_gems_path' in "$HOME/.rvmrc"
     then
-      write 'export rvm_gems_path="$HOME/.rvm/gems"' append to "$HOME/.rvmrc"
+      files write \
+        string 'export rvm_gems_path="$HOME/.rvm/gems"' \
+        append to "$HOME/.rvmrc"
     fi
 
-    source_files "$HOME/.rvmrc"
+    files source "$HOME/.rvmrc"
 
     rvm_install
   fi
 
-  ensure_files_exist "$HOME/.bash_profile"
+  [[ -f "$HOME/.bash_profile" ]] || touch "$HOME/.bash_profile"
 
-  if file_is_nonempty "$shared_path/$project/.rvmrc"
+  if [[ ! -s "$shared_path/$project/.rvmrc" ]]
   then
     (
-      source_files \
+      files source \
         "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc" "$shared_path/$project/.rvmrc"
     )
   else # Default to 1.9.2 for now
     (
-      source_files \
+      files source \
         "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
       export rvm_install_on_use_flag=1
       rvm ruby --default
     )
-
   fi
 
-  if ! file_contains "$HOME/.bash_profile" "scripts/rvm"
+  if ! files contains string "scripts/rvm" in "$HOME/.bash_profile"
   then
-    write "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
-    append to "${HOME}/.bash_profile"
+    files write \
+      string "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
+      append to "${HOME}/.bash_profile"
   fi
 }
 
@@ -280,13 +296,13 @@ bootstrap_gems()
   (
     . "${HOME}/.rvm/scripts/rvm"
 
-    command_exists "gem" || return 0
+    command exists "gem" || return 0
 
     paths enter "${release_path}"
 
-    if file_exists "Gemfile"
+    if files exists "Gemfile"
     then
-      command_exists bundle || gem install bundler --no-rdoc --no-ri
+      command exists bundle || gem install bundler --no-rdoc --no-ri
 
       bundle ${bundle_args[@]}
     else
@@ -320,7 +336,7 @@ rails_setup()
 
   setup_application_server
 
-  module_or_error deploy "Deploy extension is missing (api/deploy)"
+  modules deploy
 
   bootstrap_gems
 }
@@ -329,13 +345,13 @@ rails_server()
 {
   paths enter "${release_path}"
 
-  if command_exists "ruby"
+  if command exists "ruby"
   then
-    if file_is_nonempty "script/${action}"
+    if [[ -s "script/${action}" ]]
     then
       $ruby script/${action}
 
-    elif file_is_nonempty "script/rails"
+    elif [[ -s "script/rails" ]]
     then
       $ruby script/rails ${action}
     fi
@@ -348,15 +364,15 @@ rails_dbconsole()
 {
   paths enter "${release_path}"
 
-  if command_exists "ruby"
+  if command exists "ruby"
   then
-    if file_is_nonempty "script/${action}"
+    if [[ -s "script/${action}" ]]
     then
       ruby script/${action}
-    elif file_is_nonempty "script/rails"
+    elif [[ -s "script/rails" ]]
     then
       ruby script/rails ${action}
-    elif command_exists rails
+    elif command exists rails
     then
       rails ${action}
     else
@@ -371,15 +387,15 @@ rails_console()
 {
   paths enter "${release_path}"
 
-  if command_exists ruby
+  if command exists ruby
   then
-    if file_is_nonempty "script/${action}"
+    if [[ -s "script/${action}" ]]
     then
       ruby script/${action}
-    elif file_is_nonempty "script/rails"
+    elif [[ -s "script/rails" ]]
     then
       ruby script/rails ${action}
-    elif command_exists rails
+    elif command exists rails
     then
       rails ${action}
     fi
@@ -397,7 +413,7 @@ rails_migrate()
 {
   paths enter "${release_path}"
 
-  if ! command_exists rake
+  if ! command exists rake
   then
     install_gems rake
   fi
@@ -407,17 +423,17 @@ rails_migrate()
 
 rails_new()
 {
-  if command_exists "ruby"
+  if command exists "ruby"
   then
-    if file_is_nonempty "script/${action}"
+    if [[ -s "script/${action}" ]]
     then
       ruby script/${action}
 
-    elif file_is_nonempty "script/rails"
+    elif [[ -s "script/rails" ]]
     then
       ruby script/rails ${action}
 
-    elif command_exists rails
+    elif command exists rails
     then
       rails ${action}
     fi
@@ -430,15 +446,15 @@ rails_generate()
 {
   paths enter "${release_path}"
 
-  if command_exists "ruby"
+  if command exists "ruby"
   then
-    if file_is_nonempty "script/${action}"
+    if [[ -s "script/${action}" ]]
     then
       ruby script/${action}
-    elif file_is_nonempty "script/rails"
+    elif [[ -s "script/rails" ]]
     then
       ruby script/rails ${action}
-    elif command_exists rails
+    elif command exists rails
     then
       rails ${action}
     fi
@@ -451,30 +467,30 @@ rails_bootstrap()
 {
   paths enter "${release_path}"
 
-  if file_is_nonempty *.gems && command_exists "rvm"
+  if [[ -s *.gems ]] && command exists "rvm"
   then
     rvm gemset import *.gems
   fi
 
-  if file_is_nonempty "Gemfile"
+  if [[ -s "Gemfile" ]]
   then
-    if ! command_exists bundle
+    if ! command exists bundle
     then
       install_gems bundler
     fi
-  elif file_contains "config/environment.rb" "config.gem"
+  elif files contains string "config.gem" in "config/environment.rb"
   then
     rake gems:install
   else
     log "No Gemfile or config.gem entries detected, skipping gems."
   fi
 
-  if ! command_exists rake
+  if ! command exists rake
   then
     install_gems rake 0.8.7
   fi
 
-  if command_exists rake
+  if command exists rake
   then
     rake db:create
     rake db:migrate
@@ -487,7 +503,7 @@ rails_install()
 {
   paths enter "${release_path}"
 
-  if ! command_exists rails
+  if ! command exists rails
   then
     install_gems rails
   fi
