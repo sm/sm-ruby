@@ -333,7 +333,7 @@ rails_setup()
   log_step "Configuring database.yml (~/shared/config/database.yml)" \
     configure_database_yml
 
-  path exists "$shared_path/$project" ||
+  paths exists "$shared_path/$project" ||
     fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]}
 
   configure_rvm
