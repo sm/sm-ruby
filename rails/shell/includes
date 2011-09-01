@@ -2,3 +2,4 @@ api/project
 rvm
 api/extensions/manipulation
 api/vcs
+api/user
