@@ -153,7 +153,7 @@ configure_profiles()
 configure_smrc()
 { # TODO: Separate project specific vs rails specific env vars into project module.
 
-  [[ -n "${project}" ]] || error "project variable is not set, please run 'sm smrc' and check edit '~/.smrc'."
+  [[ -n "${project}" ]] || error "project variable is not set, please run 'sm smrc' and edit '~/.smrc'."
 
   # TODO: These variables should be read & set via the defaults module.
   local _config="${HOME}/.smrc"
@@ -166,7 +166,7 @@ configure_smrc()
       string "\nexport project=\"${project:-$user}\"" \
       append to ${_config}
 
-  variables_must_be_nonempty environment
+  [[ -n "${environment}" ]] || error "environment variable is not set, please run 'sm smrc' and edit '~/.smrc'."
 
   files contain string 'environment=' in "${_config}" ||
     fiels write \
