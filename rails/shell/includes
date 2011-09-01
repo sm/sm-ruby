@@ -1,4 +1,4 @@
-ext/project
-ext/rvm
-ext/extensions/manipulation
-ext/vcs
+api/project
+api/rvm
+api/extensions/manipulation
+api/vcs
