@@ -232,8 +232,6 @@ configure_rvm()
         append to "$HOME/.rvmrc"
     fi
 
-    files source "$HOME/.rvmrc"
-
     rvm_install
   fi
 
@@ -510,5 +508,50 @@ rails_install()
   if ! command exists rails
   then
     install_gems rails
+  fi
+}
+
+install_gem()
+{
+  gem install --no-rdoc --no-ri -q "$@"
+}
+
+install_gems() {
+  local _gem _gems=("$@") _result=0
+
+  (( ${#_gems[@]} > 0 )) ||
+    fail "Cannot install gems, as no gem names were given!"
+
+  for _gem in "${_gems[@]}"
+  do
+    install_gem ${_gem} || (( _result++ ))
+  done
+
+  return $_result
+}
+
+rvm_install()
+{
+  local _version=${1:-latest} _result=0 url
+
+  files source "/etc/rvmrc" "$HOME/.rvmrc"
+
+  rvm_files=(
+    "$rvm_path/scripts/rvm"
+    "$HOME/.rvm/scripts/rvm"
+    "/usr/local/rvm/scripts/rvm"
+  )
+
+  local _files=( $(files nonempty "${rvm_files[@]}") )
+
+  [[ -z "${_files}" ]]  || files source ${files}
+
+  if ! command is function rvm
+  then
+    url="https://rvm.beginrescueend.com/install/rvm"
+    curl -L -sk "$url" -o rvm-installer
+    chmod +x "rvm-installer"
+    ./rvm-installer --version ${_version}
+    files remove "rvm-installer"
   fi
 }
