@@ -83,12 +83,14 @@ configure_database_yml()
   if [[ ! -s "$shared_path/config/database.yml" ]]
   then
     true "${database:=postgresql}"
-    write "\n${environment}: &defaults\n  adapter: ${database}\n  username: $project\n  password: '$project'\n  database: ${project}_${environment}\n  pool: 5\n  timeout: 5000" \
+    files write \
+      string "\n${environment}: &defaults\n  adapter: ${database}\n  username: $project\n  password: '$project'\n  database: ${project}_${environment}\n  pool: 5\n  timeout: 5000" \
       to "$shared_path/config/database.yml"
 
     if [[ "$database" == "mysql" ]]
     then
-      write "  socket: ${socket:-/tmp/mysql.sock}\n  encoding: utf8\n" \
+      files write \
+        string "  socket: ${socket:-/tmp/mysql.sock}\n  encoding: utf8\n" \
         append to "$shared_path/config/database.yml"
     fi
   fi
