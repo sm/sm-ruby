@@ -2,13 +2,15 @@
 
 unicorn_initialize()
 {
-  variables_must_be_nonempty environment RAILS_ENV project
+  variables must be nonempty \
+    environment project \
+    type error
 
   pid_file="$shared_path/pids/$project.pid"
   service_pid_file="${pid_file}" # Needed for unicorn_status
   pid_file_pid=0 running_pid=0 master_pid=0
 
-  if file_is_nonempty "$pid_file"
+  if files are nonempty "$pid_file"
   then
     read -r pid_file_pid < "${pid_file}"
   fi
@@ -17,11 +19,11 @@ unicorn_initialize()
 
   load_ruby_environment
 
-  if path exists "$release_path"
+  if paths exists "$release_path"
   then
     paths enter "${release_path}"
     # Since enter will not trigger project rvmrc files,
-    source_files "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
+    files source "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
   fi
 
   service_log_file="${shared_path}/log/unicorn.log"
@@ -80,7 +82,7 @@ unicorn_cli()
 set_master_pid()
 {
   # Fetch the running pid.
-  if variable_is_nonempty project
+  if variables are nonempty project
   then
     running_pid=$( ps auxww |
     awk "/[u]nicorn master/ && ! /(old)/ && /\/${project}\// {print \$2}"
@@ -118,11 +120,11 @@ set_master_pid()
 
 unicorn_setup()
 {
-  if template_exists "unicorn/unicorn.rb"
+  if templates exist "unicorn/unicorn.rb"
   then
     paths create "$shared_path/config"
 
-    install_template "unicorn/unicorn.rb" "${shared_path}/config/"
+    templates install "unicorn/unicorn.rb" to "${shared_path}/config/"
 
     succeed "Setup complete."
   else
@@ -139,9 +141,9 @@ unicorn_start()
 
   log "Starting unicorn herd master for $project."
 
-  if file_is_nonempty "$release_path/config/unicorn.rb"
+  if files are nonempty "$release_path/config/unicorn.rb"
   then
-    if file_is_nonempty "$release_path/config.ru"
+    if files are nonempty "$release_path/config.ru"
     then
       binary="unicorn"
     else
@@ -155,7 +157,7 @@ unicorn_start()
     else
       log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
       tail -n 50 "${service_log_file}"
-      error
+      error ""
     fi
   else
     fail "config/unicorn.rb not found, aborting start."
@@ -180,9 +182,9 @@ unicorn_restart()
   then
     log "Unicorn herd master not found running for $project $environment, starting."
 
-    if file_is_nonempty "$release_path/config/unicorn.rb"
+    if files are nonempty "$release_path/config/unicorn.rb"
     then
-      if file_is_nonempty "$release_path/config.ru"
+      if files are nonempty "$release_path/config.ru"
       then
         ${binary:-unicorn} \
           -c "$release_path/config/unicorn.rb" \
@@ -266,7 +268,7 @@ unicorn_list()
   if (( master_pid > 0 ))
   then
     # TODO: Use service_list
-    if variable_is_nonempty project
+    if variables are nonempty project
     then
       ps auxww | awk "/[u]nicorn/ && /master/ && /\/${project}\//"
       ps auxww | awk "/[u]nicorn/ && /worker/ && /\/${project}\//"
@@ -281,19 +283,19 @@ unicorn_list()
 
 unicorn_install()
 {
-  install_gems unicorn
-  # gem install unicorn --no-rdoc --no-ri -q
+  #TODO: extract that one from sm/sm-ruby/rails
+  # install_gems unicorn
+  gem install unicorn --no-rdoc --no-ri -q
 }
 
 load_ruby_environment()
 {
-  if file_exists "$HOME/.rvm/environments/default"
+  if files exists "$HOME/.rvm/environments/default"
   then
-    source_files "$HOME/.rvm/environments/default"
+    files source "$HOME/.rvm/environments/default"
 
-  elif file_exists "/usr/local/rvm/environments/default"
+  elif files exists "/usr/local/rvm/environments/default"
   then
-    source_files "/usr/local/rvm/environments/default"
+    files source "/usr/local/rvm/environments/default"
   fi
 }
-
