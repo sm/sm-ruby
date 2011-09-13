@@ -9,7 +9,7 @@ unicorn_initialize()
   pid_file="$shared_path/pids/$project.pid"
   service_pid_file="${pid_file}" # Needed for unicorn_status
 
-  true ${pid_file_pid:=} ${running_pid:=0} ${master_pid:=0}
+  true ${pid_file_pid:=0} ${running_pid:=0} ${master_pid:=0}
 
   if files are nonempty "$pid_file"
   then
