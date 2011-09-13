@@ -170,7 +170,7 @@ unicorn_stop()
   then
     log "Signaling unicorn master to quit for $project."
 
-    service_signal QUIT ${master_pid}
+    service signal QUIT ${master_pid}
   else
     succeed "Unicorn herd is not running for $project yet."
   fi
@@ -201,7 +201,7 @@ unicorn_restart()
 
     log "Signaling herd master '$master_pid' for $project $environment to re-execute the running binary."
 
-    service_signal USR2 ${master_pid}
+    service signal USR2 ${master_pid}
 
     log "Signaled unicorn master '$master_pid' for $project $environment, it should restart within a few seconds. As requests finish processing workers will be replaced."
   fi
@@ -211,7 +211,7 @@ unicorn_terminate()
 {
   if (( master_pid > 0 ))
   then
-    service_signal TERM ${master_pid}
+    service signal TERM ${master_pid}
   else
     succeed "unicorn is not running for $project."
   fi
@@ -221,7 +221,7 @@ unicorn_increase()
 {
   if (( master_pid > 0 ))
   then
-    service_signal TTIN ${master_pid}
+    service signal TTIN ${master_pid}
   else
     fail "unicorn is not running for $project yet."
   fi
@@ -231,7 +231,7 @@ unicorn_decrease()
 {
   if (( master_pid > 0 ))
   then
-    service_signal TTOU ${master_pid}
+    service signal TTOU ${master_pid}
   else
     fail "unicorn is not running for $project."
   fi
@@ -242,7 +242,7 @@ unicorn_pause()
   if (( master_pid > 0 ))
   then
     paths enter "${release_path}"
-    service_signal WINCH ${master_pid}
+    service signal WINCH ${master_pid}
   else
     succeed "Unicorn is not running for $project yet."
   fi
@@ -257,7 +257,7 @@ unicorn_reopen_logs()
 {
   if (( master_pid > 0 ))
   then
-    service_signal USR1 ${master_pid}
+    service signal USR1 ${master_pid}
   else
     succeed "unicorn is not running for $project yet."
   fi
