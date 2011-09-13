@@ -1,0 +1,19 @@
+#!/bin/sh
+
+description "Extension for managing Unicorn (http://unicorn.bogomips.org/)."
+
+action "service start" "Start."
+action "service stop" "Stop."
+action "service restart" "Restart."
+action "service reload" "Reload unicorn configuration file."
+action "service logs" "Reopen log files."
+action "service increase" "Increase the number of unicorn worker processes."
+action "service decrease" "Decrease the number of unicorn worker processes."
+action "service terminate" "Force kill unicorn master."
+action "service list" "List all running unicorns for $project $environment."
+action "service pause" "Pause all unicorn workers."
+action "service unpause" "Unpause all unicorn workers."
+action "service help" "Display this help text."
+
+show_help usage
+
