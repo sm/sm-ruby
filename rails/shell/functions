@@ -203,7 +203,7 @@ setup_shared_path()
 
   for _path in config log pids sockets "public/assets" tmp
   do
-    log_step "Ensuring path exists ~ ${shared_path}/${_path}" \
+    log step "Ensuring path exists ~ ${shared_path}/${_path}" \
       paths create  "${shared_path}/${_path}"
   done
 }
@@ -315,10 +315,10 @@ bootstrap_gems()
 
 rails_setup()
 {
-  log_step "Configuring ~/.smrc" \
+  log step "Configuring ~/.smrc" \
     configure_smrc
 
-  log_step "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)" \
+  log step "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)" \
     configure_profiles
 
   [[ -n "shared_path" ]] || error "shared_path not set"
@@ -327,10 +327,10 @@ rails_setup()
 
   paths enter "${shared_path}"
 
-  log_step "Setting up shared path (~/shared)"
+  log step "Setting up shared path (~/shared)"
   setup_shared_path
 
-  log_step "Configuring database.yml (~/shared/config/database.yml)" \
+  log step "Configuring database.yml (~/shared/config/database.yml)" \
     configure_database_yml
 
   paths exists "$shared_path/$project" ||

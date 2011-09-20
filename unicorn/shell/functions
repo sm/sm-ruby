@@ -2,6 +2,8 @@
 
 unicorn_initialize()
 {
+  typeset -g running_pid old_pid master_pid pid_file pid_file_pid
+
   variables must be nonempty \
     environment project \
     type error
@@ -142,26 +144,27 @@ unicorn_start()
 
   log "Starting unicorn herd master for $project."
 
-  if files are nonempty "$release_path/config/unicorn.rb"
+  if files are empty "$release_path/config/unicorn.rb"
   then
-    if files are nonempty "$release_path/config.ru"
-    then
-      binary="unicorn"
-    else
-      binary="unicorn_rails"
-    fi
-
-    echo ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
-    if ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
-    then
-      succeed "Unicorn herd master has been launched $project."
-    else
-      log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
-      tail -n 50 "${service_log_file}"
-      error ""
-    fi
-  else
     fail "config/unicorn.rb not found, aborting start."
+  fi
+
+  if files are nonempty "$release_path/config.ru"
+  then
+    binary="unicorn"
+  else
+    binary="unicorn_rails"
+  fi
+
+  echo ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
+
+  if ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
+  then
+    succeed "Unicorn herd master has been launched $project."
+  else
+    log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
+    tail -n 50 "${service_log_file}"
+    error ""
   fi
 }
 
