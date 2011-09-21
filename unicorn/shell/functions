@@ -1,8 +1,9 @@
 #!/bin/sh
 
+typeset running_pid old_pid master_pid pid_file pid_file_pid
+
 unicorn_initialize()
 {
-  typeset -g running_pid old_pid master_pid pid_file pid_file_pid
 
   variables must be nonempty \
     environment project \
