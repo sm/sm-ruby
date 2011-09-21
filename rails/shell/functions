@@ -164,14 +164,14 @@ configure_smrc()
     error ".smrc file does not exist, run following command to generate it:\n\n sm smrc\n"
 
   files contain string 'project=' in "${_config}" ||
-    fiels write \
+    files write \
       string "\nexport project=\"${project:-$user}\"" \
       append to ${_config}
 
   [[ -n "${environment}" ]] || error "environment variable is not set, please run 'sm smrc' and edit '~/.smrc'."
 
   files contain string 'environment=' in "${_config}" ||
-    fiels write \
+    files write \
       string "\nexport environment=\"$environment\"" \
       append to ${_config}
 
@@ -191,7 +191,7 @@ configure_smrc()
   if [[ -n "${database}" ]] &&
     ! files contain string 'database=' in "${_config}"
   then
-    fiels write \
+    files write \
       string "export database=\"${database}\"" \
       append to "${_config}"
   fi
@@ -222,7 +222,7 @@ configure_rvm()
 
     if ! files contain string 'rvm_install_on_use_flag' in "$HOME/.rvmrc"
     then
-      fiels write \
+      files write \
         string 'export rvm_install_on_use_flag=1' \
         append to "$HOME/.rvmrc"
     fi
