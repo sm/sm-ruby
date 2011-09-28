@@ -1,9 +1,11 @@
 #!/bin/sh
 
-typeset running_pid old_pid master_pid pid_file pid_file_pid
+typeset -g running_pid old_pid master_pid pid_file pid_file_pid environment \
+  project >/dev/null 2>&1
 
 unicorn_initialize()
 {
+  local pid_file
 
   variables must be nonempty \
     environment project \
@@ -56,6 +58,7 @@ unicorn_usage() {
 
 unicorn_cli()
 {
+  local number_of_args
   number_of_args=${#extension_args[@]}
 
   for ((index=0 ; index < $number_of_args ; index++)) ; do
