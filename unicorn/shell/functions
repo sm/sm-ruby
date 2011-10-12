@@ -135,7 +135,7 @@ unicorn_setup()
 
     succeed "Setup complete."
   else
-    fail "Template file $extensions_path/unicorn/templates/unicorn.rb.template is missing."
+    log fail "Template file $extensions_path/unicorn/templates/unicorn.rb.template is missing."
   fi
 }
 
@@ -152,7 +152,7 @@ unicorn_start()
 
   if files are empty "$release_path/config/unicorn.rb"
   then
-    fail "config/unicorn.rb not found, aborting start."
+    log fail "config/unicorn.rb not found, aborting start."
   fi
 
   if files are nonempty "$release_path/config.ru"
@@ -170,7 +170,7 @@ unicorn_start()
   else
     log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
     tail -n 50 "${service_log_file}"
-    error ""
+    log error ""
   fi
 }
 
@@ -206,7 +206,7 @@ unicorn_restart()
         binary="unicorn_rails"
       fi
     else
-      fail "config/unicorn.rb not found, aborting start."
+      log fail "config/unicorn.rb not found, aborting start."
     fi
   else
     log "Master pid '$master_pid' found."
@@ -235,7 +235,7 @@ unicorn_increase()
   then
     service signal TTIN ${master_pid}
   else
-    fail "unicorn is not running for $project yet."
+    log fail "unicorn is not running for $project yet."
   fi
 }
 
@@ -245,7 +245,7 @@ unicorn_decrease()
   then
     service signal TTOU ${master_pid}
   else
-    fail "unicorn is not running for $project."
+    log fail "unicorn is not running for $project."
   fi
 }
 
