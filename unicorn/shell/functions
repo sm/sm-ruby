@@ -141,6 +141,8 @@ unicorn_setup()
 
 unicorn_start()
 {
+  local binary
+
   if (( master_pid > 0 ))
   then
     succeed "Unicorn herd master is already running for $project."
@@ -186,6 +188,8 @@ unicorn_stop()
 
 unicorn_restart()
 {
+  local binary
+
   if (( master_pid <= 0 ))
   then
     log "Unicorn herd master not found running for $project $environment, starting."
