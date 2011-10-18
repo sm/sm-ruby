@@ -59,8 +59,23 @@ before_fork do |server, worker|
   end
 end
 
+# If Bundler is available; and unicorn is reloading ensure the PATH and
+# GEM_HOME and BUNDLE_GEMFILE are pointing to a correct path/filename.
+if defined?(Bundler)
+  before_exec do |server|
+    paths = (ENV["PATH"] || "").split(File::PATH_SEPARATOR)
+    paths.unshift "#{shared_bundler_gems_path}/bin"
+    ENV["PATH"] = paths.uniq.join(File::PATH_SEPARATOR)
+    ENV["GEM_HOME"] = ENV["GEM_PATH"] = shared_bundler_gems_path
+    ENV["BUNDLE_GEMFILE"] = "#{current_path}/Gemfile"
+  end
+end
+
 after_fork do |server, worker|
-  # the following is required for Rails + "preload_app true",
+  worker_pid = File.join(File.dirname(server.config[:pid]), "unicorn_worker_<%= @app %>_#{worker.nr}.pid")
+  File.open(worker_pid, "w") { |f| f.puts Process.pid }
+  # The following is required for Rails + "preload_app true",
   defined?(ActiveRecord::Base) and
   ActiveRecord::Base.establish_connection
 end
+

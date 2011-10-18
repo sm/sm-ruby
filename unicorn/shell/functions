@@ -17,9 +17,7 @@ unicorn_initialize()
   true ${pid_file_pid:=0} ${running_pid:=0} ${master_pid:=0}
 
   if files are nonempty "$pid_file"
-  then
-    read -r pid_file_pid < "${pid_file}"
-  fi
+  then read -r pid_file_pid < "${pid_file}" ; fi
 
   set_master_pid
 
@@ -133,7 +131,7 @@ unicorn_setup()
 
     templates install "unicorn/unicorn.rb" to "${shared_path}/config/"
 
-    succeed "Setup complete."
+    log succeed "Setup complete."
   else
     log fail "Template file $extensions_path/unicorn/templates/unicorn.rb.template is missing."
   fi
@@ -145,7 +143,7 @@ unicorn_start()
 
   if (( master_pid > 0 ))
   then
-    succeed "Unicorn herd master is already running for $project."
+    log succeed "Unicorn herd master is already running for $project."
   fi
 
   log "Starting unicorn herd master for $project."
@@ -166,7 +164,7 @@ unicorn_start()
 
   if ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
   then
-    succeed "Unicorn herd master has been launched $project."
+    log succeed "Unicorn herd master has been launched $project."
   else
     log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
     tail -n 50 "${service_log_file}"
@@ -180,9 +178,9 @@ unicorn_stop()
   then
     log "Signaling unicorn master to quit for $project."
 
-    service signal QUIT ${master_pid}
+    process signal QUIT ${master_pid}
   else
-    succeed "Unicorn herd is not running for $project yet."
+    log succeed "Unicorn herd is not running for $project yet."
   fi
 }
 
@@ -213,7 +211,7 @@ unicorn_restart()
 
     log "Signaling herd master '$master_pid' for $project $environment to re-execute the running binary."
 
-    service signal USR2 ${master_pid}
+    process signal USR2 ${master_pid}
 
     log "Signaled unicorn master '$master_pid' for $project $environment, it should restart within a few seconds. As requests finish processing workers will be replaced."
   fi
@@ -223,9 +221,9 @@ unicorn_terminate()
 {
   if (( master_pid > 0 ))
   then
-    service signal TERM ${master_pid}
+    process signal TERM ${master_pid}
   else
-    succeed "unicorn is not running for $project."
+    log succeed "unicorn is not running for $project."
   fi
 }
 
@@ -233,7 +231,7 @@ unicorn_increase()
 {
   if (( master_pid > 0 ))
   then
-    service signal TTIN ${master_pid}
+    process signal TTIN ${master_pid}
   else
     log fail "unicorn is not running for $project yet."
   fi
@@ -243,7 +241,7 @@ unicorn_decrease()
 {
   if (( master_pid > 0 ))
   then
-    service signal TTOU ${master_pid}
+    process signal TTOU ${master_pid}
   else
     log fail "unicorn is not running for $project."
   fi
@@ -254,9 +252,9 @@ unicorn_pause()
   if (( master_pid > 0 ))
   then
     paths enter "${release_path}"
-    service signal WINCH ${master_pid}
+    process signal WINCH ${master_pid}
   else
-    succeed "Unicorn is not running for $project yet."
+    log succeed "Unicorn is not running for $project yet."
   fi
 }
 
@@ -269,9 +267,9 @@ unicorn_reopen_logs()
 {
   if (( master_pid > 0 ))
   then
-    service signal USR1 ${master_pid}
+    process signal USR1 ${master_pid}
   else
-    succeed "unicorn is not running for $project yet."
+    log succeed "unicorn is not running for $project yet."
   fi
 }
 
@@ -289,7 +287,7 @@ unicorn_list()
       ps auxww | awk "/[u]nicorn/ && /worker/ && /\/${USER}\//"
     fi
   else
-    succeed "There are no unicorns running for $project."
+    log succeed "There are no unicorns running for $project."
   fi
 }
 
