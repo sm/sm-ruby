@@ -5,6 +5,8 @@ typeset -g running_pid old_pid master_pid pid_file pid_file_pid environment \
 
 unicorn_initialize()
 {
+  trace_filter unicorn || set -o xtrace
+
   local pid_file
 
   variables must be nonempty \
@@ -42,6 +44,8 @@ unicorn_initialize()
 
 
 unicorn_usage() {
+  trace_filter unicorn || set -o xtrace
+
   printf "
   Usage:
 
@@ -63,6 +67,7 @@ unicorn_usage() {
 
 unicorn_cli()
 {
+  trace_filter unicorn || set -o xtrace
   local number_of_args
   number_of_args=${#extension_args[@]}
 
@@ -93,6 +98,7 @@ unicorn_cli()
 
 set_master_pid()
 {
+  trace_filter unicorn || set -o xtrace
   # Fetch the running pid.
   if variables are nonempty project
   then
@@ -132,6 +138,7 @@ set_master_pid()
 
 unicorn_setup()
 {
+  trace_filter unicorn || set -o xtrace
   if templates exist "unicorn/unicorn.rb"
   then
     paths create "$shared_path/config"
@@ -146,6 +153,7 @@ unicorn_setup()
 
 unicorn_start()
 {
+  trace_filter unicorn || set -o xtrace
   local binary _command
 
   if (( master_pid > 0 ))
@@ -182,6 +190,7 @@ unicorn_start()
 
 unicorn_stop()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     log "Signaling unicorn master to quit for $project."
@@ -194,6 +203,7 @@ unicorn_stop()
 
 unicorn_restart()
 {
+  trace_filter unicorn || set -o xtrace
   local binary
 
   if (( master_pid <= 0 ))
@@ -218,6 +228,7 @@ unicorn_restart()
 
 unicorn_terminate()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     process signal TERM ${master_pid}
@@ -228,6 +239,7 @@ unicorn_terminate()
 
 unicorn_increase()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     process signal TTIN ${master_pid}
@@ -238,6 +250,7 @@ unicorn_increase()
 
 unicorn_decrease()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     process signal TTOU ${master_pid}
@@ -248,6 +261,7 @@ unicorn_decrease()
 
 unicorn_pause()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     paths enter "${release_path}"
@@ -259,11 +273,13 @@ unicorn_pause()
 
 unicorn_unpause()
 {
+  trace_filter unicorn || set -o xtrace
   unicorn_pause
 }
 
 unicorn_reopen_logs()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     process signal USR1 ${master_pid}
@@ -274,6 +290,7 @@ unicorn_reopen_logs()
 
 unicorn_list()
 {
+  trace_filter unicorn || set -o xtrace
   if (( master_pid > 0 ))
   then
     # TODO: Use service_list
@@ -292,6 +309,7 @@ unicorn_list()
 
 unicorn_install()
 {
+  trace_filter unicorn || set -o xtrace
   #TODO: extract that one from sm/sm-ruby/rails
   # install_gems unicorn
   gem install unicorn --no-rdoc --no-ri -q
@@ -299,6 +317,7 @@ unicorn_install()
 
 load_ruby_environment()
 {
+  trace_filter unicorn || set -o xtrace
   if files exists "$HOME/.rvm/environments/default"
   then
     files source "$HOME/.rvm/environments/default"
