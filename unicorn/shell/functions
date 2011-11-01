@@ -178,7 +178,7 @@ unicorn_start()
   _command="${command_prefix} ${binary:-unicorn} -c '$release_path/config/unicorn.rb' -E '$environment' -D"
 
   echo "${_command}"
-  if ${_command}
+  if eval "${_command}"
   then
     log succeed "Unicorn herd master has been launched $project."
   else
