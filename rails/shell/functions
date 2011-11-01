@@ -129,6 +129,10 @@ configure_database_yml()
         true # This would be cool eh?
         ;;
 
+      (redis)
+        true # TODO
+        ;;
+
       (sqlite*|*)
         install_gems sqlite3
         ;;
@@ -367,7 +371,7 @@ rails_setup()
 
   setup_application_server
 
-  modules deploy
+  sm deploy
 
   bootstrap_gems
 }

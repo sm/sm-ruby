@@ -1,7 +1,7 @@
 #!/bin/sh
 
 typeset -g running_pid old_pid master_pid pid_file pid_file_pid environment \
-  project >/dev/null 2>&1
+  project command_prefix >/dev/null 2>&1
 
 unicorn_initialize()
 {
@@ -28,6 +28,11 @@ unicorn_initialize()
     paths enter "${release_path}"
     # Since enter will not trigger project rvmrc files,
     files source "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
+  fi
+
+  if file exists Gemfile
+  then
+    command_prefix="bundle exec "
   fi
 
   service_log_file="${shared_path}/log/unicorn.log"
@@ -160,9 +165,9 @@ unicorn_start()
     binary="unicorn_rails"
   fi
 
-  echo ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
+  echo ${command_prefix} ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
 
-  if ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
+  if ${command_prefix} ${binary:-unicorn} -c "$release_path/config/unicorn.rb" -E "$environment" -D
   then
     log succeed "Unicorn herd master has been launched $project."
   else
@@ -196,12 +201,12 @@ unicorn_restart()
     then
       if files are nonempty "$release_path/config.ru"
       then
-        ${binary:-unicorn} \
+        ${command_prefix} ${binary:-unicorn} \
           -c "$release_path/config/unicorn.rb" \
           -E "$environment" \
           -D
       else
-        binary="unicorn_rails"
+        ${command_prefix} binary="unicorn_rails"
       fi
     else
       log fail "config/unicorn.rb not found, aborting start."
