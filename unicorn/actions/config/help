@@ -1,8 +1,0 @@
-#!/bin/sh
-
-description "Extension for managing Unicorn (http://unicorn.bogomips.org/)."
-
-action "config setup" "Setup the unicorn config file with a template in $release_path/config/"
-
-show_help usage
-

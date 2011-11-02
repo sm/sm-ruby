@@ -175,6 +175,8 @@ unicorn_start()
     binary="unicorn_rails"
   fi
 
+  file source "$HOME/.env"
+
   _command="${command_prefix} ${binary:-unicorn} -c '$release_path/config/unicorn.rb' -E '$environment' -D"
 
   echo "${_command}"
@@ -321,7 +323,6 @@ load_ruby_environment()
   if files exists "$HOME/.rvm/environments/default"
   then
     files source "$HOME/.rvm/environments/default"
-
   elif files exists "/usr/local/rvm/environments/default"
   then
     files source "/usr/local/rvm/environments/default"
