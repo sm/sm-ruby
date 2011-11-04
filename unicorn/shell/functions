@@ -175,7 +175,7 @@ unicorn_start()
     binary="unicorn_rails"
   fi
 
-  file source "$HOME/.env"
+  files source "${release_path}/.env" "$HOME/.env"
 
   _command="${command_prefix} ${binary:-unicorn} -c '$release_path/config/unicorn.rb' -E '$environment' -D"
 

@@ -2,8 +2,6 @@
 
 rails_initialize()
 {
-  typeset -gx log_path shared_path project_root
-
   log_path="${shared_path}/log" # For backup_database
 
   if [[ "$action" != "help" ]] && user is root
@@ -39,8 +37,6 @@ CLI Arguments:
 
 ralis_cli()
 {
-  typeset -gx repository_url environment project database server scm_flags > /dev/null 2>&1
-  typeset -ga extension_args > /dev/null 2>&1
   local number_of_args
 
   number_of_args=${#extension_args[@]}
@@ -87,16 +83,23 @@ configure_database_yml()
 {
   if [[ ! -s "$shared_path/config/database.yml" ]]
   then
-    true "${database:=postgresql}"
-    files write \
-      string "\n${environment}: &defaults\n  adapter: ${database}\n  username: $project\n  password: '$project'\n  database: ${project}_${environment}\n  pool: 5\n  timeout: 5000" \
-      to "$shared_path/config/database.yml"
+    template install "rails/database.yml" \
+      to "$shared_path/config/database.yml" \
+      with \
+      environment "${environment}" \
+      adapter "${database:-postgresql}" \
+      username "${project}" \
+      password "${password:-"${project}"}" \
+      project "${project}" \
+      database "${project}_${environment}" \
+      pool 5 \
+      timeout 5000
 
     if [[ "$database" == "mysql" ]]
     then
-      files write \
+      files write append \
         string "  socket: ${socket:-/tmp/mysql.sock}\n  encoding: utf8\n" \
-        append to "$shared_path/config/database.yml"
+        to "$shared_path/config/database.yml"
     fi
   fi
 
@@ -104,8 +107,8 @@ configure_database_yml()
   then
     case "$database" in
       (postgresql)
-        install_gems pg
-        if [[ "$?" -ne 0 ]] ; then
+        if ! install_gems pg
+        then
           pg_config=$(command -v pg_config)
           install_gem pg -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
           # gem install pg --no-rdoc --no-ri -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
@@ -113,8 +116,8 @@ configure_database_yml()
         ;;
 
       (mysql)
-        install_gems mysql
-        if [[ "$?" -ne 0 ]] ; then
+        if ! install_gems mysql
+        then
           mysql_config=$(command -v mysql_config)
           install_gem mysql -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
           #gem install mysql --no-rdoc --no-ri -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
@@ -143,23 +146,26 @@ configure_database_yml()
 configure_profiles()
 {
   # Ensure the .smrc file and the profiles are setup properly.
-  files exist "$HOME/.bashrc" "$HOME/.bash_profile" || log error "No profile files found"
-
-  if ! files contain string '\.smrc' in "$HOME/.bashrc"
+  if ! files exist "$HOME/.bashrc" "$HOME/.bash_profile"
   then
-    files write \
+    log error "No profile files found"
+  fi
+
+  if ! file contains string '\.smrc' "$HOME/.bashrc"
+  then
+    file write \
       string '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
       to "$HOME/.bashrc"
   fi
 
-  if ! files contain string '\.bashrc' in "$HOME/.bash_profile"
+  if ! file contains string '\.bashrc' "$HOME/.bash_profile"
   then
-    files write  \
+    file write  \
       string '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
       to "$HOME/.bash_profile"
   fi
 
-  if ! files contain string '\.rvmrc' in "$HOME/.bash_profile"
+  if ! file contains string '\.rvmrc' "$HOME/.bash_profile"
   then
     files write \
       string '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
@@ -170,7 +176,10 @@ configure_profiles()
 configure_smrc()
 { # TODO: Separate project specific vs rails specific env vars into project module.
 
-  [[ -n "${project}" ]] || log error "project variable is not set, please run 'sm smrc' and edit '~/.smrc'."
+  if variable is empty project
+  then
+    log error "project variable is not set, please run 'sm smrc' and edit '~/.smrc'."
+  fi
 
   # TODO: These variables should be read & set via the defaults module.
   local _config="${HOME}/.smrc"
@@ -180,11 +189,11 @@ configure_smrc()
     sm smrc
   fi
 
-  if ! file contain string 'project=' in "${_config}"
+  if ! file contains string 'project=' "${_config}"
   then
-    files write \
+    file write append \
       string "\nexport project=\"${project:-$user}\"" \
-      append to ${_config}
+      to ${_config}
   fi
 
   if variable is empty environment
@@ -192,35 +201,35 @@ configure_smrc()
     log error "environment variable is not set, please run 'sm smrc' and edit '~/.smrc'."
   fi
 
-  if ! files contain string 'environment=' in "${_config}"
+  if ! file contains string 'environment=' "${_config}"
   then
-    files write \
+    file write append \
       string "\nexport environment=\"$environment\"" \
-      append to ${_config}
+      to ${_config}
   fi
 
-  if ! files contain string 'RAILS_ENV=' in "${_config}"
+  if ! file contains string 'RAILS_ENV=' "${_config}"
   then
-    files write \
+    file write append \
       string "\nexport RAILS_ENV=\"$environment\"" \
-      append to ${_config}
+      to ${_config}
   fi
 
-  if [[ -n "${repository_url}" ]] &&
-    ! files contain string "repository_url=" in "${_config}"
+  if variable is nonempty repository_url &&
+    ! file contains string "repository_url=" "${_config}"
   then
-    files write \
+    file write append \
       string "\nexport repository_url=\"$repository_url\"" \
-      append to "${_config}"
+      to "${_config}"
   fi
 
 
   if variable is nonempty database &&
-    ! file contain string 'database=' in "${_config}"
+    ! file contains string 'database=' "${_config}"
   then
-    files write \
+    file write append \
       string "export database=\"${database}\"" \
-      append to "${_config}"
+      to "${_config}"
   fi
 }
 
@@ -231,7 +240,7 @@ setup_shared_path()
   for _path in config log pids sockets "public/assets" tmp
   do
     log step "Ensuring path exists ~ ${shared_path}/${_path}" \
-      paths create  "${shared_path}/${_path}"
+      path create  "${shared_path}/${_path}"
   done
 }
 
@@ -240,32 +249,34 @@ configure_rvm()
   if file is empty "${HOME}/.rvm/scripts/rvm"
   then
     if file is empty "${HOME}/.rvmrc" ||
-      ! files contain string 'rvm_path=' in "$HOME/.rvmrc"
+      ! file contains string 'rvm_path=' "$HOME/.rvmrc"
     then
       files write \
         string 'export rvm_path="${HOME}/.rvm"' \
         append to "${HOME}/.rvmrc"
     fi
 
-    if ! files contain string 'rvm_install_on_use_flag' in "$HOME/.rvmrc"
+    if ! files contain string 'rvm_install_on_use_flag' "$HOME/.rvmrc"
     then
-      files write \
+      file write append \
         string 'export rvm_install_on_use_flag=1' \
-        append to "$HOME/.rvmrc"
+        to "$HOME/.rvmrc"
     fi
 
-    if ! files contain string 'rvm_gems_path' in "$HOME/.rvmrc"
+    if ! files contains string 'rvm_gems_path' "$HOME/.rvmrc"
     then
-      files write \
+      file write append \
         string 'export rvm_gems_path="$HOME/.rvm/gems"' \
-        append to "$HOME/.rvmrc"
+        to "$HOME/.rvmrc"
     fi
 
     rvm_install
   fi
 
   if file is missing "$HOME/.bash_profile"
-  then file create "$HOME/.bash_profile" ; fi
+  then
+    file create "$HOME/.bash_profile"
+  fi
 
   if file is empty "$shared_path/$project/.rvmrc"
   then
@@ -282,7 +293,7 @@ configure_rvm()
     )
   fi
 
-  if ! files contain string "scripts/rvm" in "$HOME/.bash_profile"
+  if ! file contains string "scripts/rvm" "$HOME/.bash_profile"
   then
     files write \
       string "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
@@ -328,9 +339,9 @@ bootstrap_gems()
 
     command exists "gem" || return 0
 
-    paths enter "${release_path}"
+    path enter "${release_path}"
 
-    if files exists "Gemfile"
+    if file exists "Gemfile"
     then
       command exists bundle || gem install bundler --no-rdoc --no-ri
 
@@ -350,11 +361,13 @@ rails_setup()
     configure_profiles
 
   if variable is empty shared_path
-  then log error "shared_path not set" ; fi
+  then
+    log error "shared_path not set"
+  fi
 
-  paths create "${shared_path}"
+  path create "${shared_path}"
 
-  paths enter "${shared_path}"
+  path enter "${shared_path}"
 
   log step "Setting up shared path (~/shared)"
   setup_shared_path
@@ -362,7 +375,7 @@ rails_setup()
   log step "Configuring database.yml (~/shared/config/database.yml)" \
     configure_database_yml
 
-  if ! paths exists "$shared_path/$project"
+  if ! path exists "$shared_path/$project"
   then
     fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]}
   fi
@@ -378,7 +391,7 @@ rails_setup()
 
 rails_server()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if command exists "ruby"
   then
@@ -397,7 +410,7 @@ rails_server()
 
 rails_dbconsole()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if command exists "ruby"
   then
@@ -420,7 +433,7 @@ rails_dbconsole()
 
 rails_console()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if command exists ruby
   then
@@ -446,11 +459,11 @@ rails_logtail()
 
 rails_migrate()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if ! command exists rake
   then
-    if !  install_gems rake
+    if ! install_gems rake
     then log error "There was an error installing rake" ; fi
   fi
 
@@ -480,7 +493,7 @@ rails_new()
 
 rails_generate()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if command exists "ruby"
   then
@@ -501,7 +514,7 @@ rails_generate()
 
 rails_bootstrap()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if [[ -s *.gems ]] && command exists "rvm"
   then rvm gemset import *.gems ; fi
@@ -537,7 +550,7 @@ rails_bootstrap()
 
 rails_install()
 {
-  paths enter "${release_path}"
+  path enter "${release_path}"
 
   if ! command exists rails
   then

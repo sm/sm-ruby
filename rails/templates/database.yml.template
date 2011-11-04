@@ -1,8 +1,0 @@
-{{environment}}: &defaults
-  adapter: {{database}}
-  username: {{project}}
-  password: {{project}}
-  database: {{project}}_{{environment}}
-  pool: 5
-  timeout: 5000
-
