@@ -9,9 +9,10 @@ unicorn_initialize()
 
   local pid_file
 
-  variables must be nonempty \
-    environment project \
-    type error
+  if ! variables are nonempty environment project
+  then
+    log error "The following variables must be set: environment project"
+  fi
 
   pid_file="$shared_path/pids/$project.pid"
   service_pid_file="${pid_file}" # Needed for unicorn_status

@@ -35,7 +35,7 @@ CLI Arguments:
 "
 }
 
-ralis_cli()
+rails_cli()
 {
   local number_of_args
 
@@ -592,7 +592,7 @@ rvm_install()
 
   local _files=( $(files nonempty "${rvm_files[@]}") )
 
-  if variable is nonempty
+  if array is nonempty _files
   then
     files source ${_files}
   fi
