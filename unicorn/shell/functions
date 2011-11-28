@@ -37,7 +37,12 @@ unicorn_initialize()
 
   if file exists Gemfile
   then
-    command_prefix="bundle exec "
+    if path exists "${release_path}/bin"
+    then
+      PATH="${release_path}/bin:$PATH" # Account for binstubs.
+    else
+      command_prefix="bundle exec "
+    fi
   fi
 
   service_log_file="${shared_path}/log/unicorn.log"
