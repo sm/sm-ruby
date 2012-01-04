@@ -3,8 +3,10 @@
 log "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)"
 
 # Ensure the .smrc file and the profiles are setup properly.
-if ! files exist "$HOME/.bashrc" "$HOME/.bash_profile"
-then log error "No profile files found" ; fi
+if ! files exist "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.zshenv" "$HOME/.zshrc"
+then
+  files create "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.zshenv" "$HOME/.zshrc"
+fi
 
 if ! file contains string '\.smrc' "$HOME/.env"
 then

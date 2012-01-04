@@ -1,6 +1,8 @@
 #!/bin/sh
 
-local _version=${1:-latest} _result=0 url
+typeset _version _result url_files rvm_files
+_version=${1:-latest}
+_result=0
 
 files source "/etc/rvmrc" "$HOME/.rvmrc"
 
@@ -10,7 +12,7 @@ rvm_files=(
 "/usr/local/rvm/scripts/rvm"
 )
 
-local _files=( $(files nonempty "${rvm_files[@]}") )
+_files=( $(files nonempty "${rvm_files[@]}") )
 
 if array is nonempty _files
 then files source ${_files} ; fi
