@@ -1,0 +1,53 @@
+#!/bin/sh
+
+if file is empty "${HOME}/.rvm/scripts/rvm"
+then
+  if file is empty "${HOME}/.rvmrc" || ! file contains string 'rvm_path=' "$HOME/.rvmrc"
+  then
+    files write \
+      string 'export rvm_path="${HOME}/.rvm"' \
+      append to "${HOME}/.rvmrc"
+  fi
+
+  if ! files contain string 'rvm_install_on_use_flag' "$HOME/.rvmrc"
+  then
+    file write append \
+      string 'export rvm_install_on_use_flag=1' \
+      to "$HOME/.rvmrc"
+  fi
+
+  if ! files contains string 'rvm_gems_path' "$HOME/.rvmrc"
+  then
+    file write append \
+      string 'export rvm_gems_path="$HOME/.rvm/gems"' \
+      to "$HOME/.rvmrc"
+  fi
+
+  sm rails rvm install
+fi
+
+if file is missing "$HOME/.bash_profile"
+then file create "$HOME/.bash_profile" ; fi
+
+if file is empty "$shared_path/$project/.rvmrc"
+then
+  (
+  files source \
+    "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc" "$shared_path/$project/.rvmrc"
+  )
+else # Default to 1.9.2 for now
+  (
+  files source \
+    "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
+  export rvm_install_on_use_flag=1
+  rvm ruby --default
+  )
+fi
+
+if ! file contains string "scripts/rvm" "$HOME/.bash_profile"
+then
+  files write \
+    string "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
+    append to "${HOME}/.bash_profile"
+fi
+

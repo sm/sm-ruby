@@ -78,164 +78,26 @@ rails_cli()
   rails_initialize
 }
 
-
-configure_database_yml()
-{
-  if [[ ! -s "$shared_path/config/database.yml" ]]
-  then
-    template install "rails/database.yml" \
-      to "$shared_path/config/database.yml" \
-      with \
-      environment "${environment}" \
-      adapter "${database:-postgresql}" \
-      username "${project}" \
-      password "${password:-"${project}"}" \
-      project "${project}" \
-      database "${project}_${environment}" \
-      pool 5 \
-      timeout 5000
-
-    if [[ "$database" == "mysql" ]]
-    then
-      files write append \
-        string "  socket: ${socket:-/tmp/mysql.sock}\n  encoding: utf8\n" \
-        to "$shared_path/config/database.yml"
-    fi
-  fi
-
-  if variable is nonempty database && command exists gem
-  then
-    case "$database" in
-      (postgresql)
-        if ! install_gems pg
-        then
-          pg_config=$(command -v pg_config)
-          install_gem pg -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
-          # gem install pg --no-rdoc --no-ri -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
-        fi
-        ;;
-
-      (mysql)
-        if ! install_gems mysql
-        then
-          mysql_config=$(command -v mysql_config)
-          install_gem mysql -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
-          #gem install mysql --no-rdoc --no-ri -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
-        fi
-        ;;
-
-      (mongodb)
-        install_gems mongomapper
-        ;;
-
-      (riak)
-        true # This would be cool eh?
-        ;;
-
-      (redis)
-        true # TODO
-        ;;
-
-      (sqlite*|*)
-        install_gems sqlite3
-        ;;
-    esac
-  fi
-}
-
-configure_profiles()
-{
-  # Ensure the .smrc file and the profiles are setup properly.
-  if ! files exist "$HOME/.bashrc" "$HOME/.bash_profile"
-  then
-    log error "No profile files found"
-  fi
-
-  if ! file contains string '\.smrc' "$HOME/.bashrc"
-  then
-    file write \
-      string '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
-      to "$HOME/.bashrc"
-  fi
-
-  if ! file contains string '\.bashrc' "$HOME/.bash_profile"
-  then
-    file write  \
-      string '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
-      to "$HOME/.bash_profile"
-  fi
-
-  if ! file contains string '\.rvmrc' "$HOME/.bash_profile"
-  then
-    files write \
-      string '[[ -s "$HOME/current/.rvmrc" ]] && . "$HOME/current/.rvmrc"' \
-      to "$HOME/.bash_profile"
-  fi
-}
-
-configure_smrc()
-{ # TODO: Separate project specific vs rails specific env vars into project module.
-
-  if variable is empty project
-  then
-    log error "project variable is not set, please run 'sm smrc' and edit '~/.smrc'."
-  fi
-
-  # TODO: These variables should be read & set via the defaults module.
-  local _config="${HOME}/.smrc"
-
-  if ! file exists "${_config}"
-  then
-    sm smrc
-  fi
-
-  if ! file contains string 'project=' "${_config}"
-  then
-    file write append \
-      string "\nexport project=\"${project:-$user}\"" \
-      to ${_config}
-  fi
-
-  if variable is empty environment
-  then
-    log error "environment variable is not set, please run 'sm smrc' and edit '~/.smrc'."
-  fi
-
-  if ! file contains string 'environment=' "${_config}"
-  then
-    file write append \
-      string "\nexport environment=\"$environment\"" \
-      to ${_config}
-  fi
-
-  if ! file contains string 'RAILS_ENV=' "${_config}"
-  then
-    file write append \
-      string "\nexport RAILS_ENV=\"$environment\"" \
-      to ${_config}
-  fi
-
-  if variable is nonempty repository_url &&
-    ! file contains string "repository_url=" "${_config}"
-  then
-    file write append \
-      string "\nexport repository_url=\"$repository_url\"" \
-      to "${_config}"
-  fi
-
-
-  if variable is nonempty database &&
-    ! file contains string 'database=' "${_config}"
-  then
-    file write append \
-      string "export database=\"${database}\"" \
-      to "${_config}"
-  fi
-}
-
 setup_shared_path()
 {
   local _path
+
+  if variable is empty shared_path
+  then log error "shared_path not set" ; fi
+
+  if ! path exists "${shared_path}"
+  then path create "${shared_path}" ; fi
+
+  if ! path exists "${shared_path}/deploy"
+  then path create "${shared_path}/deploy" ; fi
+
+  if variable is nonempty environment
+  then
+    if ! path exists "${shared_path}/deploy/${environment}"
+    then path create "${shared_path}/deploy/${environment}" ; fi
+  fi
+
+  path enter "${shared_path}"
 
   for _path in config log pids sockets "public/assets" tmp
   do
@@ -244,88 +106,31 @@ setup_shared_path()
   done
 }
 
-configure_rvm()
-{
-  if file is empty "${HOME}/.rvm/scripts/rvm"
-  then
-    if file is empty "${HOME}/.rvmrc" ||
-      ! file contains string 'rvm_path=' "$HOME/.rvmrc"
-    then
-      files write \
-        string 'export rvm_path="${HOME}/.rvm"' \
-        append to "${HOME}/.rvmrc"
-    fi
-
-    if ! files contain string 'rvm_install_on_use_flag' "$HOME/.rvmrc"
-    then
-      file write append \
-        string 'export rvm_install_on_use_flag=1' \
-        to "$HOME/.rvmrc"
-    fi
-
-    if ! files contains string 'rvm_gems_path' "$HOME/.rvmrc"
-    then
-      file write append \
-        string 'export rvm_gems_path="$HOME/.rvm/gems"' \
-        to "$HOME/.rvmrc"
-    fi
-
-    rvm_install
-  fi
-
-  if file is missing "$HOME/.bash_profile"
-  then
-    file create "$HOME/.bash_profile"
-  fi
-
-  if file is empty "$shared_path/$project/.rvmrc"
-  then
-    (
-      files source \
-        "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc" "$shared_path/$project/.rvmrc"
-    )
-  else # Default to 1.9.2 for now
-    (
-      files source \
-        "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
-      export rvm_install_on_use_flag=1
-      rvm ruby --default
-    )
-  fi
-
-  if ! file contains string "scripts/rvm" "$HOME/.bash_profile"
-  then
-    files write \
-      string "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
-      append to "${HOME}/.bash_profile"
-  fi
-}
-
 setup_application_server()
 {
   case "${server:-}" in
     (unicorn)
       # TODO: Extension check
-      modules unicorn
+      includes unicorn
       unicorn_setup
       ;;
     (mongrel2)
       NIY "mongrel2 is not implemented yet for the rails extension."
-      modules mongrel2
+      includes mongrel2
       mongrel2_setup
       ;;
     (thin)
-      modules thin
+      includes thin
       setup
       ;;
     (passenger) # Standalone
       NIY "passenger is not implemented yet for the rails extension."
-      modules passenger
+      includes passenger
       passenger_setup
       ;;
     (*)
       # Default to Unicorn
-      modules unicorn
+      includes unicorn
       unicorn_setup
       ;;
   esac
@@ -335,7 +140,7 @@ bootstrap_gems()
 {
   true ${bundle_args:=()}
   (
-    . "${HOME}/.rvm/scripts/rvm"
+    source "$HOME/.env"
 
     command exists "gem" || return 0
 
@@ -345,218 +150,11 @@ bootstrap_gems()
     then
       command exists bundle || gem install bundler --no-rdoc --no-ri
 
-      bundle ${bundle_args[@]}
+      bundle install --binstubs --without development test ${bundle_args[@]}
     else
       log error "'gem' command not found, not installing bundler."
     fi
   )
-}
-
-rails_setup()
-{
-  log step "Configuring ~/.smrc" \
-    configure_smrc
-
-  log step "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)" \
-    configure_profiles
-
-  if variable is empty shared_path
-  then
-    log error "shared_path not set"
-  fi
-
-  path create "${shared_path}"
-
-  path enter "${shared_path}"
-
-  log step "Setting up shared path (~/shared)"
-  setup_shared_path
-
-  log step "Configuring database.yml (~/shared/config/database.yml)" \
-    configure_database_yml
-
-  if ! path exists "$shared_path/$project"
-  then
-    fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]}
-  fi
-
-  configure_rvm
-
-  setup_application_server
-
-  sm deploy
-
-  bootstrap_gems
-}
-
-rails_server()
-{
-  path enter "${release_path}"
-
-  if command exists "ruby"
-  then
-    if file is nonempty "script/${action}"
-    then
-      $ruby script/${action}
-
-    elif file is nonempty "script/rails"
-    then
-      $ruby script/rails ${action}
-    fi
-  else
-    log error "A default ruby does not seem to be set, cannot run ${action}"
-  fi
-}
-
-rails_dbconsole()
-{
-  path enter "${release_path}"
-
-  if command exists "ruby"
-  then
-    if file is nonempty "script/${action}"
-    then
-      ruby script/${action}
-    elif file is nonempty "script/rails"
-    then
-      ruby script/rails ${action}
-    elif command exists rails
-    then
-      rails ${action}
-    else
-      true # TODO: raw psql/mysql/etc... based on database.yml
-    fi
-  else
-    log error "'ruby' does not exist in the path, cannot run ${action}"
-  fi
-}
-
-rails_console()
-{
-  path enter "${release_path}"
-
-  if command exists ruby
-  then
-    if file is nonempty "script/${action}"
-    then
-      ruby script/${action}
-    elif file is nonempty "script/rails"
-    then
-      ruby script/rails ${action}
-    elif command exists rails
-    then
-      rails ${action}
-    fi
-  else
-    log error "'ruby' does not exist in the path, cannot run ${action}"
-  fi
-}
-
-rails_logtail()
-{
-  exec tail -f "${shared_path}/log/*.log"
-}
-
-rails_migrate()
-{
-  path enter "${release_path}"
-
-  if ! command exists rake
-  then
-    if ! install_gems rake
-    then log error "There was an error installing rake" ; fi
-  fi
-
-  rake db:migrate --trace
-}
-
-rails_new()
-{
-  if command exists "ruby"
-  then
-    if file is nonempty "./script/${action}"
-    then
-      ruby ./script/${action}
-
-    elif file is nonempty "./script/rails"
-    then
-      ruby ./script/rails ${action}
-
-    elif command exists rails
-    then
-      rails ${action}
-    fi
-  else
-    log error "'ruby' does not exist in the path, cannot run ${action}"
-  fi
-}
-
-rails_generate()
-{
-  path enter "${release_path}"
-
-  if command exists "ruby"
-  then
-    if file is nonempty "script/${action}"
-    then
-      ruby script/${action}
-    elif file is nonempty "script/rails"
-    then
-      ruby script/rails ${action}
-    elif command exists rails
-    then
-      rails ${action}
-    fi
-  else
-    log error "'ruby' does not exist in the path, cannot run ${action}"
-  fi
-}
-
-rails_bootstrap()
-{
-  path enter "${release_path}"
-
-  if [[ -s *.gems ]] && command exists "rvm"
-  then rvm gemset import *.gems ; fi
-
-  if file is nonempty "Gemfile"
-  then
-    if ! command exists bundle
-    then
-      if ! install_gems bundler
-      then log "Installing bundler gem failed." ; fi
-    fi
-  elif files contain string "config.gem" in "config/environment.rb"
-  then
-    rake gems:install
-  else
-    log "No Gemfile or config.gem entries detected, skipping gems."
-  fi
-
-  if ! command exists rake
-  then
-    if ! install_gems rake 0.9.2
-    then log warn "Installing rake gem failed." ; fi
-  fi
-
-  if command exists rake
-  then
-    rake db:create
-    rake db:migrate
-  else
-    log warn "'rake' command is missing, skipping db:create and db:migrate tasks."
-  fi
-}
-
-rails_install()
-{
-  path enter "${release_path}"
-
-  if ! command exists rails
-  then
-    if ! install_gems rails
-    then log warn "Installing rails gem failed" ; fi
-  fi
 }
 
 install_gem()
@@ -578,31 +176,3 @@ install_gems() {
   return $_result
 }
 
-rvm_install()
-{
-  local _version=${1:-latest} _result=0 url
-
-  files source "/etc/rvmrc" "$HOME/.rvmrc"
-
-  rvm_files=(
-    "$rvm_path/scripts/rvm"
-    "$HOME/.rvm/scripts/rvm"
-    "/usr/local/rvm/scripts/rvm"
-  )
-
-  local _files=( $(files nonempty "${rvm_files[@]}") )
-
-  if array is nonempty _files
-  then
-    files source ${_files}
-  fi
-
-  if ! command is function rvm
-  then
-    url="https://rvm.beginrescueend.com/install/rvm"
-    curl -L -sk "$url" -o rvm-installer
-    chmod +x "rvm-installer"
-    ./rvm-installer --version ${_version}
-    files remove "rvm-installer"
-  fi
-}

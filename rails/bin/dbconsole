@@ -1,0 +1,22 @@
+#!/bin/sh
+
+path enter "${release_path}"
+
+if command exists "ruby"
+then
+  if file is nonempty "script/${action}"
+  then
+    ruby script/${action}
+  elif file is nonempty "script/rails"
+  then
+    ruby script/rails ${action}
+  elif command exists rails
+  then
+    rails ${action}
+  else
+    true # TODO: raw psql/mysql/etc... based on database.yml
+  fi
+else
+  log error "'ruby' does not exist in the path, cannot run ${action}"
+fi
+

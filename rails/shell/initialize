@@ -5,3 +5,4 @@ typeset -ga scm_flags extension_args > /dev/null
 typeset -gx log_path shared_path project_root repository_url environment project \
   database server > /dev/null
 
+typeset -g file

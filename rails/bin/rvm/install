@@ -1,0 +1,26 @@
+#!/bin/sh
+
+local _version=${1:-latest} _result=0 url
+
+files source "/etc/rvmrc" "$HOME/.rvmrc"
+
+rvm_files=(
+"$rvm_path/scripts/rvm"
+"$HOME/.rvm/scripts/rvm"
+"/usr/local/rvm/scripts/rvm"
+)
+
+local _files=( $(files nonempty "${rvm_files[@]}") )
+
+if array is nonempty _files
+then files source ${_files} ; fi
+
+if ! command is function rvm
+then
+  url="https://rvm.beginrescueend.com/install/rvm"
+  curl -L -sk "$url" -o rvm-installer
+  chmod +x "rvm-installer"
+  ./rvm-installer --version ${_version}
+  files remove "rvm-installer"
+fi
+

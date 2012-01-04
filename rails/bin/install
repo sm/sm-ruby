@@ -1,0 +1,9 @@
+#!/bin/sh
+
+path enter "${release_path}"
+
+if ! command exists rails
+then
+  if ! install_gems rails
+  then log warn "Installing rails gem failed" ; fi
+fi

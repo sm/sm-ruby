@@ -1,0 +1,7 @@
+#!/bin/sh
+
+path enter "${stage_path}"
+
+if file exists Gemfile
+then bundle install --binstubs --without development test ; fi
+

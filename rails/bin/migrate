@@ -1,0 +1,11 @@
+#!/bin/sh
+
+path enter "${release_path}"
+
+if ! command exists rake
+then
+  if ! install_gems rake
+  then log error "There was an error installing rake" ; fi
+fi
+
+exec rake db:migrate --trace

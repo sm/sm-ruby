@@ -1,0 +1,41 @@
+#!/bin/sh
+
+log "Configuring profiles (~/.rvmrc, ~/.bashrc ~/.bash_profile)"
+
+# Ensure the .smrc file and the profiles are setup properly.
+if ! files exist "$HOME/.bashrc" "$HOME/.bash_profile"
+then log error "No profile files found" ; fi
+
+if ! file contains string '\.smrc' "$HOME/.env"
+then
+  file write \
+    string '[[ -s "$HOME/.smrc" ]] && . "$HOME/.smrc"' \
+    to "$HOME/.env"
+fi
+
+for file in .bashrc .zshenv
+do
+  if ! file contains string '\.env' "$HOME/${file}"
+  then
+    file write \
+      string '[[ -s "$HOME/.env" ]] && . "$HOME/.env"' \
+      to "$HOME/${file}"
+  fi
+done
+
+if ! file contains string '\.bashrc' "$HOME/.bash_profile"
+then
+  file write  \
+    string '[[ "-s $HOME/.bashrc" ]] && . "$HOME/.bashrc"' \
+    to "$HOME/.bash_profile"
+fi
+
+for file in .bash_profile .zshenv
+do
+  if ! file contains string 'rvm/scripts/rvm' "$HOME/${file}"
+  then
+    file write \
+      string '[[ -s "$HOME/.rvm/scripts/rvm" ]] && . "$HOME/.rvm/scripts/rvm"' \
+      to "$HOME/${file}"
+fi
+

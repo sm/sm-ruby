@@ -13,3 +13,6 @@ found on the RVM website at
 
     https://rvm.beginrescueend.com/deployment/best-practices
 
+## Setup
+
+    application@linux$ sm rails setup

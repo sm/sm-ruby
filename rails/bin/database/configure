@@ -1,0 +1,64 @@
+#!/bin/sh
+
+if user is root ; then log error "May only be run as root." ; fi
+
+if [[ ! -s "$shared_path/config/database.yml" ]]
+then
+  template install "rails/database.yml" \
+    to "$shared_path/config/database.yml" \
+    with \
+    environment "${environment}" \
+    adapter "${database:-postgresql}" \
+    username "${project}" \
+    password "${password:-"${project}"}" \
+    project "${project}" \
+    database "${project}_${environment}" \
+    pool 5 \
+    timeout 5000
+
+  if [[ "$database" == "mysql" ]]
+  then
+    files write append \
+      string "  socket: ${socket:-/tmp/mysql.sock}\n  encoding: utf8\n" \
+      to "$shared_path/config/database.yml"
+  fi
+fi
+
+if variable is nonempty database && command exists gem
+then
+  case "$database" in
+    (postgresql)
+      if ! install_gems pg
+      then
+        pg_config=$(command -v pg_config)
+        install_gem pg -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
+        # gem install pg --no-rdoc --no-ri -- --with-pg-config=${pg_config:-/usr/local/postgresql/bin/pg_config}
+      fi
+      ;;
+
+    (mysql)
+      if ! install_gems mysql
+      then
+        mysql_config=$(command -v mysql_config)
+        install_gem mysql -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
+        #gem install mysql --no-rdoc --no-ri -- --with-mysql-config=${mysql_config:-/usr/local/mysql/bin/mysql_config}
+      fi
+      ;;
+
+    (mongodb)
+      install_gems mongomapper
+      ;;
+
+    (riak)
+      true # This would be cool eh?
+      ;;
+
+    (redis)
+      true # TODO
+      ;;
+
+    (sqlite*|*)
+      install_gems sqlite3
+      ;;
+  esac
+fi

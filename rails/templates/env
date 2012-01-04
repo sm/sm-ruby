@@ -1,0 +1,8 @@
+if [[ -s "$HOME/.smrc" ]] ; then source "$HOME/.smrc" ; fi
+if [[ -s "$HOME/.rvm/environments/default" ]] ; then source "$HOME/.rvm/environments/default" ; fi
+
+RAILS_ENV="${environment}"
+port={{port}}
+
+export environment RAILS_ENV port
+
