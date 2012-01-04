@@ -1,30 +1,35 @@
 #!/bin/sh
 
-if file is empty "${HOME}/.rvm/scripts/rvm"
+if file is empty "${HOME}/.rvmrc" || ! file contains string 'rvm_path=' "$HOME/.rvmrc"
 then
-  if file is empty "${HOME}/.rvmrc" || ! file contains string 'rvm_path=' "$HOME/.rvmrc"
-  then
-    files write \
-      string 'export rvm_path="${HOME}/.rvm"' \
-      append to "${HOME}/.rvmrc"
-  fi
-
-  if ! files contain string 'rvm_install_on_use_flag' "$HOME/.rvmrc"
-  then
-    file write append \
-      string 'export rvm_install_on_use_flag=1' \
-      to "$HOME/.rvmrc"
-  fi
-
-  if ! files contains string 'rvm_gems_path' "$HOME/.rvmrc"
-  then
-    file write append \
-      string 'export rvm_gems_path="$HOME/.rvm/gems"' \
-      to "$HOME/.rvmrc"
-  fi
-
-  sm rails rvm install
+  files write \
+    string 'export rvm_path="${HOME}/.rvm"' \
+    append to "${HOME}/.rvmrc"
 fi
+
+if file is empty "${HOME}/.rvmrc" || ! file contains string 'rvm_bin_path=' "$HOME/.rvmrc"
+then
+  files write \
+    string 'export rvm_bin_path="${HOME}/.rvm/bin"' \
+    append to "${HOME}/.rvmrc"
+fi
+
+if ! files contain string 'rvm_install_on_use_flag' "$HOME/.rvmrc"
+then
+  file write append \
+    string 'export rvm_install_on_use_flag=1' \
+    to "$HOME/.rvmrc"
+fi
+
+if ! files contains string 'rvm_gems_path' "$HOME/.rvmrc"
+then
+  file write append \
+    string 'export rvm_gems_path="$HOME/.rvm/gems"' \
+    to "$HOME/.rvmrc"
+fi
+
+if ! file exists "${HOME}/.rvm/scripts/rvm"
+then sm rails rvm install ; fi
 
 if file is missing "$HOME/.bash_profile"
 then file create "$HOME/.bash_profile" ; fi
