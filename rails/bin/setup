@@ -13,11 +13,8 @@ sm rails smrc
 
 sm rails profiles configure
 
-log step "Setting up shared path (~/shared)" \
-  setup_shared_path
-
-log step "Configuring database.yml (~/shared/config/database.yml)" \
-  configure_database_yml
+sm rails shared configure
+sm rails database configure
 
 for file in before_deploy after_deploy
 do

@@ -78,34 +78,6 @@ rails_cli()
   rails_initialize
 }
 
-setup_shared_path()
-{
-  local _path
-
-  if variable is empty shared_path
-  then log error "shared_path not set" ; fi
-
-  if ! path exists "${shared_path}"
-  then path create "${shared_path}" ; fi
-
-  if ! path exists "${shared_path}/deploy"
-  then path create "${shared_path}/deploy" ; fi
-
-  if variable is nonempty environment
-  then
-    if ! path exists "${shared_path}/deploy/${environment}"
-    then path create "${shared_path}/deploy/${environment}" ; fi
-  fi
-
-  path enter "${shared_path}"
-
-  for _path in config log pids sockets "public/assets" tmp
-  do
-    log step "Ensuring path exists ~ ${shared_path}/${_path}" \
-      path create  "${shared_path}/${_path}"
-  done
-}
-
 setup_application_server()
 {
   case "${server:-}" in

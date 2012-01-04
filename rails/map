@@ -1,13 +1,4 @@
-backup_database=backup_database
-bootstrap=rails_bootstrap()
-console=rails_()
-dbconsole=rails_dbconsole()
-generate=rails_generate()
-
-install=rails_install()
-logtail=rails_logtail()
-migrate=rails_migrate()
-new=rails_new()
-s=rails_server()
-server=rails_server()
-setup=rails_setup()
+s=server
+db=dbconsole
+c=console
+logs=logtail
