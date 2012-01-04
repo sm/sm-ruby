@@ -14,7 +14,7 @@ sm rails profiles configure
 sm rails shared configure
 sm rails database configure
 
-for file in before_deploy after_deploy
+for file in before_release after_release
 do
   if ! file exists "${shared_path}/deploy/${file}"
   then
