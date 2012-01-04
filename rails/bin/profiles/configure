@@ -39,5 +39,6 @@ do
     file write \
       string '[[ -s "$HOME/.rvm/scripts/rvm" ]] && . "$HOME/.rvm/scripts/rvm"' \
       to "$HOME/${file}"
-fi
+  fi
+done
 

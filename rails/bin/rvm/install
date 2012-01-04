@@ -1,11 +1,13 @@
 #!/bin/sh
 
-typeset _version _result url_files rvm_files
+typeset _version _result url_files rvm_files _files
+
 _version=${1:-latest}
 _result=0
 
 files source "/etc/rvmrc" "$HOME/.rvmrc"
 
+file sorurce
 rvm_files=(
 "$rvm_path/scripts/rvm"
 "$HOME/.rvm/scripts/rvm"
@@ -14,8 +16,11 @@ rvm_files=(
 
 _files=( $(files nonempty "${rvm_files[@]}") )
 
-if array is nonempty _files
-then files source ${_files} ; fi
+for file in "${_files[@]}"
+do
+  if file source "${file}"
+  then break ; fi
+done
 
 if ! command is function rvm
 then
