@@ -33,6 +33,7 @@ sm rails rvm install
 
 setup_application_server || true
 
+sm ext install deploy
 sm deploy
 
 bootstrap_gems
