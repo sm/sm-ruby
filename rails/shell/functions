@@ -64,6 +64,9 @@ rails_cli()
       (--scm-flag|-F)
         scm_flags+=("${extension_args[$((++index))]}")
         ;;
+      (--ruby)
+        ruby_string="${extension_args[$((++index))]}"
+        ;;
       (--help|-h)
         rails_usage
         exit 0

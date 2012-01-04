@@ -34,21 +34,8 @@ then sm rails rvm install ; fi
 if file is missing "$HOME/.bash_profile"
 then file create "$HOME/.bash_profile" ; fi
 
-if file is empty "$shared_path/$project/.rvmrc"
-then
-  (
-  files source \
-    "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc" "$shared_path/$project/.rvmrc"
-  )
-else # Default to 1.9.3 for now
-  (
-  files source \
-    "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
-  export rvm_install_on_use_flag=1
-  rvm 1.9.3
-  rvm alias create default 1.9.3
-  )
-fi
+$HOME/.rvm/bin/rvm ${ruby_string}
+$HOME/.rvm/bin/rvm alias create default ${ruby_string}
 
 if ! file contains string "scripts/rvm" "$HOME/.bash_profile"
 then
