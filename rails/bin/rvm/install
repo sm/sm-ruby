@@ -7,7 +7,6 @@ _result=0
 
 files source "/etc/rvmrc" "$HOME/.rvmrc"
 
-file sorurce
 rvm_files=(
 "$rvm_path/scripts/rvm"
 "$HOME/.rvm/scripts/rvm"
