@@ -34,9 +34,6 @@ then sm rails rvm install ; fi
 if file is missing "$HOME/.bash_profile"
 then file create "$HOME/.bash_profile" ; fi
 
-$HOME/.rvm/bin/rvm ${ruby_string}
-$HOME/.rvm/bin/rvm alias create default ${ruby_string}
-
 if ! file contains string "scripts/rvm" "$HOME/.bash_profile"
 then
   files write \

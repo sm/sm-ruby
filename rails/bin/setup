@@ -27,9 +27,9 @@ done
 if ! path exists "$shared_path/$project"
 then fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]} ; fi
 
-sm rails profiles configure
-sm rails rvm install
 sm rails rvm configure
+sm rails rvm install
+sm rails rvm setup
 
 setup_application_server || true
 

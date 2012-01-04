@@ -1,0 +1,10 @@
+#!/bin/sh
+
+typeset -gx rvm_is_not_a_function
+
+rvm_is_not_a_function=0
+
+$HOME/.rvm/bin/rvm ${ruby_string}
+
+$HOME/.rvm/bin/rvm alias create default ${ruby_string}
+

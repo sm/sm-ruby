@@ -1,21 +1,6 @@
 #!/bin/sh
 
-typeset _result url_files rvm_files _files
-
-_result=0
-
-files source "/etc/rvmrc" "$HOME/.rvmrc"
-
-rvm_files=(
-"$rvm_path/scripts/rvm"
-"$HOME/.rvm/scripts/rvm"
-"/usr/local/rvm/scripts/rvm"
-)
-
-_files=( $(files nonempty "${rvm_files[@]}") )
-source "${_files[@]}"  || true
-
-if ! command is function rvm
+if ! file exists "$HOME/.rvm/scripts/rvm"
 then
   bash < <(
     curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer
