@@ -14,12 +14,7 @@ rvm_files=(
 )
 
 _files=( $(files nonempty "${rvm_files[@]}") )
-
-for file in "${_files[@]}"
-do
-  if file source "${file}"
-  then break ; fi
-done
+source "${_files[@]}"  || true
 
 if ! command is function rvm
 then
