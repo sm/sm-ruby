@@ -37,7 +37,7 @@ then file create "$HOME/.bash_profile" ; fi
 if ! file contains string "scripts/rvm" "$HOME/.bash_profile"
 then
   files write \
-    string "[[ -s \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\" ]] && . \"${rvm_path:-"$HOME/.rvm"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
+    string "[[ -s \"$HOME/.rvm\"}/scripts/rvm\" ]] && . \"$HOME/.rvm\"}/scripts/rvm\"  # Load RVM into a shell session *as a function*" \
     append to "${HOME}/.bash_profile"
 fi
 

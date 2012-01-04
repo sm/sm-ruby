@@ -13,6 +13,7 @@ sm rails smrc
 sm rails profiles configure
 sm rails shared configure
 sm rails database configure
+sm rails rvm configure
 
 for file in before_release after_release
 do
@@ -27,7 +28,6 @@ done
 if ! path exists "$shared_path/$project"
 then fetch_uri "$repository_url" "$shared_path/$project" ${scm_flags[@]} ; fi
 
-sm rails rvm configure
 sm rails rvm install
 sm rails rvm setup
 
