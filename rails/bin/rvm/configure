@@ -40,7 +40,8 @@ else # Default to 1.9.3 for now
   files source \
     "$HOME/.rvm/scripts/rvm" "$HOME/.rvmrc"
   export rvm_install_on_use_flag=1
-  rvm ruby-1.9.3 --default
+  rvm 1.9.3
+  rvm alias create default 1.9.3
   )
 fi
 
