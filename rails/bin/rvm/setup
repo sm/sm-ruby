@@ -4,6 +4,6 @@ typeset -gx rvm_is_not_a_function
 
 rvm_is_not_a_function=0
 
-# $HOME/.rvm/bin/rvm ${ruby_string}
+log "Setting ${ruby_string} to default (this will install if not installed and thus may take a while so please be patient)."
 $HOME/.rvm/bin/rvm alias create default ${ruby_string}
 
