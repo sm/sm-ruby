@@ -71,7 +71,7 @@ fail "database not specified in shared/config/database.yml" if @database.nil? ||
 @password    = @config["password"].to_s.strip
 
 trace "password: #{@password}"
-fail "password: not specified in shared/config/database.yml" if @password.nil? || @password.empty?
+# fail "password: not specified in shared/config/database.yml" if @password.nil? || @password.empty?
 
 @hostname    = @config["host"] || "localhost"
 @port        = @config["port"] || "5432"
