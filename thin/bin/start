@@ -19,5 +19,5 @@ exec thin start  \
   --log "$HOME/shared/log/${environment}.log"    \
   --tag ${project}:${environment}  \
   --port ${port} -s${thin_worker}    \
-  --pid /var/run/${project}/thin.pid
+  --pid "$HOME/shared/pids/${project}.pid"
 
