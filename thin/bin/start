@@ -1,18 +1,11 @@
 #!/bin/sh
 
-if user is root
-then
-  log error "Thin ${action} may be run only as a non-root user."
-fi
-
-source "$HOME/.env" # This file should load the ruby environment & define 'port'
-
 exec thin start  \
   --address 0.0.0.0  \
   --environment ${environment}    \
   --chdir "$HOME/active/${project}"  \
   --log "$HOME/shared/log/${environment}.log"    \
   --tag ${project}:${environment}  \
-  --port ${port} -s2    \
+  --port ${port} -s${thin_worker}    \
   --pid "$HOME/shared/pids/${project}.pid"
 
