@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if user is root
+then
+  log error "Thin ${action} may be run only as a non-root user."
+fi
+
+if variable is empty thin_worker
+then
+  export thin_worker=2
+fi
+
+source "$HOME/.env" # This file should load the ruby environment & define 'port'

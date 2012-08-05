@@ -9,7 +9,7 @@ then
   if files are nonempty "$release_path/config/unicorn.rb"
   then
     log "Unicorn herd master not found running for $project $environment, starting."
-    unicorn_start
+    sm unicorn start
   else
     log fail "config/unicorn.rb not found, aborting start."
   fi

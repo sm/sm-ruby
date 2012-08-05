@@ -6,7 +6,7 @@ if templates exist "unicorn/unicorn.rb"
 then
   paths create "$shared_path/config"
 
-  templates install "unicorn/unicorn.rb" to "${shared_path}/config/"
+  templates install "unicorn/unicorn.rb" to "${shared_path}/config/unicorn.rb"
 
   log succeed "Setup complete."
 else
