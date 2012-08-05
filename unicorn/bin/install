@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# TODO: extract that one from sm/sm-ruby/rails install_gems unicorn
+# TODO: Check CLI args for version specifier, install specific version if given.
+
+trace_filter unicorn || set -o xtrace
+
+gem install unicorn --no-rdoc --no-ri -q
+

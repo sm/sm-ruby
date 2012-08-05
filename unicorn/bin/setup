@@ -1,0 +1,15 @@
+#!/bin/sh
+
+trace_filter unicorn || set -o xtrace
+
+if templates exist "unicorn/unicorn.rb"
+then
+  paths create "$shared_path/config"
+
+  templates install "unicorn/unicorn.rb" to "${shared_path}/config/"
+
+  log succeed "Setup complete."
+else
+  log fail "Template file $extensions_path/unicorn/templates/unicorn.rb.template is missing."
+fi
+

@@ -1,111 +1,40 @@
 #!/bin/sh
 
-typeset -g running_pid old_pid master_pid pid_file pid_file_pid environment \
-  project command_prefix >/dev/null 2>&1
-
-unicorn_initialize()
-{
-  trace_filter unicorn || set -o xtrace
-
-  local pid_file
-
-  if ! variables are nonempty environment project
-  then
-    log error "The following variables must be set: environment project"
-  fi
-
-  pid_file="$shared_path/pids/$project.pid"
-  service_pid_file="${pid_file}" # Needed for unicorn_status
-
-  true ${pid_file_pid:=0} ${running_pid:=0} ${master_pid:=0}
-
-  if files are nonempty "$pid_file"
-  then read -r pid_file_pid < "${pid_file}" ; fi
-
-  set_master_pid
-
-  load_ruby_environment
-
-  if paths exists "$release_path"
-  then
-    paths enter "${release_path}"
-    # Since enter will not trigger project rvmrc files,
-    files source "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
-  fi
-
-  files source "${release_path}/.env" "$HOME/.env"
-
-  if file exists Gemfile
-  then
-    if path exists "${release_path}/bin"
-    then
-      PATH="${release_path}/bin:$PATH" # Account for binstubs.
-    else
-      command_prefix="bundle exec "
-    fi
-  fi
-
-  service_log_file="${shared_path}/log/unicorn.log"
-}
-
-
-unicorn_usage() {
-  trace_filter unicorn || set -o xtrace
-
-  printf "
-  Usage:
-
-    $0 [options]
-
-  options:
-
-    --prefix   - specify prefix path
-    --src)     - specify source directory
-    --data)    - specify data directory
-    --user)    - specify user to install as
-    --version) - specify version to install
-    --licence) - view licence
-    --help)    - view this usage information
-
-"
-  return 0
-}
-
 unicorn_cli()
 {
-  trace_filter unicorn || set -o xtrace
   local number_of_args
+
+  trace_filter unicorn || set -o xtrace
+
   number_of_args=${#extension_args[@]}
 
-  for ((index=0 ; index < $number_of_args ; index++)) ; do
-
+  for ((index=0 ; index < $number_of_args ; index++))
+  do
     token="${extension_args[$index]}"
 
     case "$token" in
-      --version)
+      (--version)
         package_version="${extension_args[$((++index))]}"
         ;;
-      --licence)
+      (--licence)
         display_extension_licence
         exit 0
         ;;
-      --help|-h)
+      (--help|-h)
         unicorn_usage
         exit 0
         ;;
-      *)
+      (*)
         true # Ignore?
         ;;
     esac
   done
-
-  unicorn_initialize
 }
 
 set_master_pid()
 {
   trace_filter unicorn || set -o xtrace
-  # Fetch the running pid.
+
   if variables are nonempty project
   then
     running_pid=$( ps auxww |
@@ -130,206 +59,26 @@ set_master_pid()
   then
     echo ${running_pid} > "$pid_file" # Make sure the correct running pid is in the pid_file.
     master_pid=${running_pid} # Set to the found running pid_file.
-
   elif (( pid_file_pid > 0 ))
   then
     master_pid=${pid_file_pid} # Running and matches pid_file.
   fi
 
+  # TODO: if process is running ${master_pid}
   if os is linux && [[ ! -d "/proc/${master_pid}" ]]
   then # Ensure that the proc exists, otherwise reset master_pid.
     master_pid=0
   fi
 }
 
-unicorn_setup()
-{
-  trace_filter unicorn || set -o xtrace
-  if templates exist "unicorn/unicorn.rb"
-  then
-    paths create "$shared_path/config"
-
-    templates install "unicorn/unicorn.rb" to "${shared_path}/config/"
-
-    log succeed "Setup complete."
-  else
-    log fail "Template file $extensions_path/unicorn/templates/unicorn.rb.template is missing."
-  fi
-}
-
-unicorn_start()
-{
-  trace_filter unicorn || set -o xtrace
-  local binary _command
-
-  if (( master_pid > 0 ))
-  then
-    log succeed "Unicorn herd master is already running for $project."
-  fi
-
-  log "Starting unicorn herd master for $project."
-
-  if files are empty "$release_path/config/unicorn.rb"
-  then
-    log fail "config/unicorn.rb not found, aborting start."
-  fi
-
-  if files are nonempty "$release_path/config.ru"
-  then
-    binary="unicorn"
-  else
-    binary="unicorn_rails"
-  fi
-
-  files source "${release_path}/.env" "$HOME/.env"
-
-  _command="${command_prefix} ${binary:-unicorn} -c '$release_path/config/unicorn.rb' -E '$environment' -D"
-
-  echo "${_command}"
-  if eval "${_command}"
-  then
-    log succeed "Unicorn herd master has been launched $project."
-  else
-    log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
-    tail -n 50 "${service_log_file}"
-    log error ""
-  fi
-}
-
-unicorn_stop()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    log "Signaling unicorn master to quit for $project."
-
-    process signal QUIT ${master_pid}
-  else
-    log succeed "Unicorn herd is not running for $project yet."
-  fi
-}
-
-unicorn_restart()
-{
-  trace_filter unicorn || set -o xtrace
-  local binary
-
-  if (( master_pid <= 0 ))
-  then
-    if files are nonempty "$release_path/config/unicorn.rb"
-    then
-      log "Unicorn herd master not found running for $project $environment, starting."
-      unicorn_start
-    else
-      log fail "config/unicorn.rb not found, aborting start."
-    fi
-  else
-    log "Master pid '$master_pid' found."
-
-    log "Signaling herd master '$master_pid' for $project $environment to re-execute the running binary."
-
-    process signal USR2 ${master_pid}
-
-    log "Signaled unicorn master '$master_pid' for $project $environment, it should restart within a few seconds. As requests finish processing workers will be replaced."
-  fi
-}
-
-unicorn_terminate()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    process signal TERM ${master_pid}
-  else
-    log succeed "unicorn is not running for $project."
-  fi
-}
-
-unicorn_increase()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    process signal TTIN ${master_pid}
-  else
-    log fail "unicorn is not running for $project yet."
-  fi
-}
-
-unicorn_decrease()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    process signal TTOU ${master_pid}
-  else
-    log fail "unicorn is not running for $project."
-  fi
-}
-
-unicorn_pause()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    paths enter "${release_path}"
-    process signal WINCH ${master_pid}
-  else
-    log succeed "Unicorn is not running for $project yet."
-  fi
-}
-
-unicorn_unpause()
-{
-  trace_filter unicorn || set -o xtrace
-  unicorn_pause
-}
-
-unicorn_reopen_logs()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    process signal USR1 ${master_pid}
-  else
-    log succeed "unicorn is not running for $project yet."
-  fi
-}
-
-unicorn_list()
-{
-  trace_filter unicorn || set -o xtrace
-  if (( master_pid > 0 ))
-  then
-    # TODO: Use service_list
-    if variables are nonempty project
-    then
-      ps auxww | awk "/[u]nicorn/ && /master/ && /\/${project}\//"
-      ps auxww | awk "/[u]nicorn/ && /worker/ && /\/${project}\//"
-    else
-      ps auxww | awk "/[u]nicorn/ && /master/ && /\/${USER}\//"
-      ps auxww | awk "/[u]nicorn/ && /worker/ && /\/${USER}\//"
-    fi
-  else
-    log succeed "There are no unicorns running for $project."
-  fi
-}
-
-unicorn_install()
-{
-  trace_filter unicorn || set -o xtrace
-  #TODO: extract that one from sm/sm-ruby/rails
-  # install_gems unicorn
-  gem install unicorn --no-rdoc --no-ri -q
-}
-
 load_ruby_environment()
 {
   trace_filter unicorn || set -o xtrace
-  if files exists "$HOME/.rvm/environments/default"
+
+  if file exists "$HOME/.rvm/environments/default"
   then
     files source "$HOME/.rvm/environments/default"
-  elif files exists "/usr/local/rvm/environments/default"
+  elif file exists "/usr/local/rvm/environments/default"
   then
     files source "/usr/local/rvm/environments/default"
   fi

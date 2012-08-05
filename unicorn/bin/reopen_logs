@@ -1,0 +1,11 @@
+#!/bin/sh
+
+trace_filter unicorn || set -o xtrace
+
+if (( master_pid > 0 ))
+then
+  process signal USR1 ${master_pid}
+else
+  log succeed "unicorn is not running for $project yet."
+fi
+

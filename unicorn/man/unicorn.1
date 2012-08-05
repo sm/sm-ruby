@@ -1,0 +1,23 @@
+
+Extension for managing Unicorn (http://unicorn.bogomips.org/).
+
+install - Installs ${package_name} gem.
+
+config {action} - Where actions is one of {setup}
+
+    setup - Setup the unicorn config file with a template in $release_path/config/
+
+service {action} - Where action is one of:
+
+    start - Start.
+    stop - Stop.
+    restart - Restart.
+    reload - Reload unicorn configuration file.
+    logs - Reopen log files.
+    increase - Increase the number of unicorn worker processes.
+    decrease - Decrease the number of unicorn worker processes.
+    terminate - Force kill unicorn master.
+    list - List all running unicorns for $project $environment.
+    pause - Pause all unicorn workers.
+    unpause - Unpause all unicorn workers.
+

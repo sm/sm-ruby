@@ -1,0 +1,12 @@
+#!/bin/sh
+
+trace_filter unicorn || set -o xtrace
+
+if (( master_pid > 0 ))
+then
+  paths enter "${release_path}"
+  process signal WINCH ${master_pid}
+else
+  log succeed "Unicorn is not running for $project yet."
+fi
+

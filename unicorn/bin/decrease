@@ -1,0 +1,11 @@
+#!/bin/sh
+
+trace_filter unicorn || set -o xtrace
+
+if (( master_pid > 0 ))
+then
+  process signal TTOU ${master_pid}
+else
+  log fail "unicorn is not running for $project."
+fi
+

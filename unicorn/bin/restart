@@ -1,0 +1,25 @@
+#!/bin/sh
+
+typeset binary
+
+trace_filter unicorn || set -o xtrace
+
+if (( master_pid <= 0 ))
+then
+  if files are nonempty "$release_path/config/unicorn.rb"
+  then
+    log "Unicorn herd master not found running for $project $environment, starting."
+    unicorn_start
+  else
+    log fail "config/unicorn.rb not found, aborting start."
+  fi
+else
+  log "Master pid '$master_pid' found."
+
+  log "Signaling herd master '$master_pid' for $project $environment to re-execute the running binary."
+
+  process signal USR2 ${master_pid}
+
+  log "Signaled unicorn master '$master_pid' for $project $environment, it should restart within a few seconds. As requests finish processing workers will be replaced."
+fi
+

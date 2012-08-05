@@ -1,0 +1,39 @@
+#!/bin/sh
+
+typeset binary _command
+
+trace_filter unicorn || set -o xtrace
+
+if (( master_pid > 0 ))
+then
+  log succeed "Unicorn herd master is already running for $project."
+fi
+
+log "Starting unicorn herd master for $project."
+
+if files are empty "$release_path/config/unicorn.rb"
+then
+  log fail "config/unicorn.rb not found, aborting start."
+fi
+
+if files are nonempty "$release_path/config.ru"
+then
+  binary="unicorn"
+else
+  binary="unicorn_rails"
+fi
+
+files source "${release_path}/.env" "$HOME/.env"
+
+_command="${command_prefix} ${binary:-unicorn} -c '$release_path/config/unicorn.rb' -E '$environment' -D"
+
+echo "${_command}"
+if eval "${_command}"
+then
+  log succeed "Unicorn herd master has been launched $project."
+else
+  log "Unicorn herd master failed to start, check ${service_log_file}, last 50:"
+  tail -n 50 "${service_log_file}"
+  log error ""
+fi
+

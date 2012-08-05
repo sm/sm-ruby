@@ -1,0 +1,47 @@
+#!/bin/sh
+
+typeset -g running_pid old_pid master_pid pid_file pid_file_pid environment \
+  project command_prefix >/dev/null 2>&1
+
+trace_filter unicorn || set -o xtrace
+
+local pid_file
+
+if ! variables are nonempty environment project
+then
+  log error "The following variables must be set: environment project"
+fi
+
+pid_file="$shared_path/pids/$project.pid"
+service_pid_file="${pid_file}" # Needed for unicorn_status
+
+true ${pid_file_pid:=0} ${running_pid:=0} ${master_pid:=0}
+
+if files are nonempty "$pid_file"
+then read -r pid_file_pid < "${pid_file}" ; fi
+
+set_master_pid
+
+load_ruby_environment
+
+if paths exists "$release_path"
+then
+  paths enter "${release_path}"
+  # Since enter will not trigger project rvmrc files,
+  files source "$release_path/.rvmrc" "$HOME/.rvm/hooks/after_cd" || true
+fi
+
+files source "${release_path}/.env" "$HOME/.env"
+
+if file exists Gemfile
+then
+  if path exists "${release_path}/bin"
+  then
+    PATH="${release_path}/bin:$PATH" # Account for binstubs.
+  else
+    command_prefix="bundle exec "
+  fi
+fi
+
+service_log_file="${shared_path}/log/unicorn.log"
+

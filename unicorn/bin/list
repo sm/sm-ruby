@@ -1,0 +1,19 @@
+#!/bin/sh
+
+trace_filter unicorn || set -o xtrace
+
+if (( master_pid > 0 ))
+then
+  # TODO: Use service_list
+  if variables are nonempty project
+  then
+    ps auxww | awk "/[u]nicorn/ && /master/ && /\/${project}\//"
+    ps auxww | awk "/[u]nicorn/ && /worker/ && /\/${project}\//"
+  else
+    ps auxww | awk "/[u]nicorn/ && /master/ && /\/${USER}\//"
+    ps auxww | awk "/[u]nicorn/ && /worker/ && /\/${USER}\//"
+  fi
+else
+  log succeed "There are no unicorns running for $project."
+fi
+

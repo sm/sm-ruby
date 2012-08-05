@@ -1,4 +1,4 @@
-# Unicorn BDSM Extension
+# Unicorn SMF Extension
 
-This extension is meant to handle all aspects of handling a Ruby project running
-under unicorn.
+This extension is intended to handle all aspects of controlling Unicorn running.
+
