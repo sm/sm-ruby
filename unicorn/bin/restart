@@ -18,7 +18,7 @@ else
 
   log "Signaling herd master '$master_pid' for $project $environment to re-execute the running binary."
 
-  process signal USR2 ${master_pid}
+  kill -USR2 ${master_pid}
 
   log "Signaled unicorn master '$master_pid' for $project $environment, it should restart within a few seconds. As requests finish processing workers will be replaced."
 fi

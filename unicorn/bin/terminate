@@ -4,7 +4,7 @@ trace_filter unicorn || set -o xtrace
 
 if (( master_pid > 0 ))
 then
-  process signal TERM ${master_pid}
+  kill -TERM ${master_pid}
 else
   log succeed "unicorn is not running for $project."
 fi
