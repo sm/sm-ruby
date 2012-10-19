@@ -2,6 +2,7 @@ api/templates
 api/project
 api/command
 api/extensions/manipulation
+api/variables
 api/vcs
 api/user
 api/files
