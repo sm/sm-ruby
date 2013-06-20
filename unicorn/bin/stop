@@ -5,7 +5,10 @@ trace_filter unicorn || set -o xtrace
 if (( master_pid > 0 ))
 then
   log "Signaling unicorn master to quit for $project."
-  kill -QUIT ${master_pid}
+  if [[ $1 == "force" ]]
+  then kill -9 ${master_pid}
+  else kill -QUIT ${master_pid}
+  fi
 else
   log succeed "Unicorn herd is not running for $project yet."
 fi
