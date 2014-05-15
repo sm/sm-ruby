@@ -38,28 +38,28 @@ set_master_pid()
   if variables are nonempty project
   then
     running_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && ! /(old)/ && /\/${project}\// {print \$2}"
+    awk "/[u]nicorn master/ && ! /(old)/ && /\/${project} \// {print \$2}"
     )
 
     old_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && /(old)/ && /\/${project}\// {print \$2}"
+    awk "/[u]nicorn master/ && /(old)/ && /\/${project} \// {print \$2}"
     )
   else
     running_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && ! /(old)/ && /\/${USER}\// {print \$2}"
+    awk "/[u]nicorn master/ && ! /(old)/ && /\/${USER} \// {print \$2}"
     )
     old_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && /(old)/ && /\/${USER}\// {print \$2}"
+    awk "/[u]nicorn master/ && /(old)/ && /\/${USER} \// {print \$2}"
     )
 
     log "WARNING: 'project' should be set in ~/.smrc"
   fi
 
-  if (( running_pid > 0 ))
+  if [[ ${running_pid} > 0 ]]
   then
     echo ${running_pid} > "$pid_file" # Make sure the correct running pid is in the pid_file.
     master_pid=${running_pid} # Set to the found running pid_file.
-  elif (( pid_file_pid > 0 ))
+  elif [[ ${pid_file_pid} > 0 ]]
   then
     master_pid=${pid_file_pid} # Running and matches pid_file.
   fi
