@@ -38,7 +38,7 @@ set_master_pid()
   if variables are nonempty project
   then
     running_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && ! /(old)/ && /\/^${USER} / && /\/${project}\// {print \$2}"
+    awk "/[u]nicorn master/ && ! /(old)/ && /^${USER} / && /\/${project}\// {print \$2}"
     )
 
     old_pid=$( ps auxww |
