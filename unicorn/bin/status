@@ -3,6 +3,5 @@
 trace_filter unicorn || set -o xtrace
 
 ps auxww | head -1
-ps auxww | awk "/[u]nicorn.* master/ && /${project}/"
-ps auxww | awk "/[u]nicorn.* worker/ && /${project}/"
-
+ps auxww | awk "/[u]nicorn.* master/ && /^${USER} / && /${project}/"
+ps auxww | awk "/[u]nicorn.* worker/ && /^${USER} / && /${project}/"
