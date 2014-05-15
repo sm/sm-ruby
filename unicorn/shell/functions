@@ -38,18 +38,18 @@ set_master_pid()
   if variables are nonempty project
   then
     running_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && ! /(old)/ && /\/^${USER} \// && /\/${project}\// {print \$2}"
+    awk "/[u]nicorn master/ && ! /(old)/ && /\/^${USER} / && /\/${project}\// {print \$2}"
     )
 
     old_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && /(old)/ && /\/^${USER} \// && /\/${project}\// {print \$2}"
+    awk "/[u]nicorn master/ && /(old)/ && /^${USER} / && /\/${project}\// {print \$2}"
     )
   else
     running_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && ! /(old)/ && /\/^${USER} \// {print \$2}"
+    awk "/[u]nicorn master/ && ! /(old)/ && /^${USER} / {print \$2}"
     )
     old_pid=$( ps auxww |
-    awk "/[u]nicorn master/ && /(old)/ && /\/^${USER} \// {print \$2}"
+    awk "/[u]nicorn master/ && /(old)/ && /^${USER} / {print \$2}"
     )
 
     log "WARNING: 'project' should be set in ~/.smrc"
